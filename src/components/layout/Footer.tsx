@@ -10,6 +10,7 @@ import {
   MessageCircle,
   PackageCheck
 } from 'lucide-react';
+import brandLogo from '../../assets/logo.png';
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -68,7 +69,7 @@ export const Footer: React.FC = () => {
           {/* Brand Col */}
           <div className="md:col-span-4 space-y-3">
             <img
-              src="/logo/logo.png"
+              src={brandLogo}
               alt="The Aesthetic Palette"
               className="h-10 sm:h-12 w-auto object-contain"
             />
@@ -80,7 +81,7 @@ export const Footer: React.FC = () => {
                 <Mail className="w-3.5 h-3.5 text-terracotta" /> hello@theaestheticpalette.com
               </p>
               <p className="flex items-center gap-1.5">
-                <MessageCircle className="w-3.5 h-3.5 text-sage-deep" /> WhatsApp Studio Support: +1 (555) 342-8821
+                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" /> WhatsApp Studio: +92 317 2072623
               </p>
             </div>
           </div>

@@ -143,6 +143,14 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
+// Helper to query products by ObjectId, slug, or custom id
+function getProductFilter(id) {
+  if (mongoose.Types.ObjectId.isValid(id) && String(id).length === 24) {
+    return { _id: id };
+  }
+  return { $or: [{ slug: id }, { id: id }, { sku: id }] };
+}
+
 // ================= PRODUCT & INVENTORY CRUD =================
 app.get('/api/products', async (req, res) => {
   try {
@@ -165,7 +173,8 @@ app.post('/api/products', async (req, res) => {
 
 app.put('/api/products/:id', async (req, res) => {
   try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const filter = getProductFilter(req.params.id);
+    const updated = await Product.findOneAndUpdate(filter, req.body, { new: true });
     res.json(updated);
   } catch (error) {
     res.status(400).json({ message: 'Error updating product', error: error.message });
@@ -175,8 +184,9 @@ app.put('/api/products/:id', async (req, res) => {
 app.patch('/api/products/:id/stock', async (req, res) => {
   try {
     const { stockQuantity } = req.body;
-    const updated = await Product.findByIdAndUpdate(
-      req.params.id,
+    const filter = getProductFilter(req.params.id);
+    const updated = await Product.findOneAndUpdate(
+      filter,
       { stockQuantity },
       { new: true }
     );
@@ -188,7 +198,8 @@ app.patch('/api/products/:id/stock', async (req, res) => {
 
 app.delete('/api/products/:id', async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
+    const filter = getProductFilter(req.params.id);
+    await Product.findOneAndDelete(filter);
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     res.status(400).json({ message: 'Error deleting product', error: error.message });

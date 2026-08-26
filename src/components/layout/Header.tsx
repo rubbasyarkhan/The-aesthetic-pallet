@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ShoppingBag, Menu, X, Search, User as UserIcon } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import brandLogo from '../../assets/logo.png';
 
 export const Header: React.FC = () => {
   const { totalItemsCount, openCart } = useCart();
@@ -50,7 +51,7 @@ export const Header: React.FC = () => {
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <img
-              src="/logo/logo.png"
+              src={brandLogo}
               alt="The Aesthetic Palette"
               className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-102"
             />

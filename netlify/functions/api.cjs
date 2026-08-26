@@ -144,6 +144,14 @@ router.post('/admin/login', async (req, res) => {
   }
 });
 
+// Helper to query products by ObjectId, slug, or custom id
+function getProductFilter(id) {
+  if (mongoose.Types.ObjectId.isValid(id) && String(id).length === 24) {
+    return { _id: id };
+  }
+  return { $or: [{ slug: id }, { id: id }, { sku: id }] };
+}
+
 // Products CRUD
 router.get('/products', async (req, res) => {
   try {
@@ -166,7 +174,8 @@ router.post('/products', async (req, res) => {
 
 router.put('/products/:id', async (req, res) => {
   try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const filter = getProductFilter(req.params.id);
+    const updated = await Product.findOneAndUpdate(filter, req.body, { new: true });
     res.json(updated);
   } catch (error) {
     res.status(400).json({ message: 'Error updating product', error: error.message });
@@ -176,7 +185,8 @@ router.put('/products/:id', async (req, res) => {
 router.patch('/products/:id/stock', async (req, res) => {
   try {
     const { stockQuantity } = req.body;
-    const updated = await Product.findByIdAndUpdate(req.params.id, { stockQuantity }, { new: true });
+    const filter = getProductFilter(req.params.id);
+    const updated = await Product.findOneAndUpdate(filter, { stockQuantity }, { new: true });
     res.json(updated);
   } catch (error) {
     res.status(400).json({ message: 'Error updating stock', error: error.message });
@@ -185,7 +195,8 @@ router.patch('/products/:id/stock', async (req, res) => {
 
 router.delete('/products/:id', async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
+    const filter = getProductFilter(req.params.id);
+    await Product.findOneAndDelete(filter);
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     res.status(400).json({ message: 'Error deleting product', error: error.message });
