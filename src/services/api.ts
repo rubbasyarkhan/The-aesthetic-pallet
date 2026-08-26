@@ -1,6 +1,7 @@
 import { Product, Order, Review } from '../types';
 
-const API_BASE = 'http://localhost:5000/api';
+const isLocalhostDev = typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '3000';
+const API_BASE = isLocalhostDev ? 'http://localhost:5000/api' : '/api';
 
 export const api = {
   // Admin Login via Database
