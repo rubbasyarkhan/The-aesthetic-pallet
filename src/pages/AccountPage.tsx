@@ -176,8 +176,10 @@ export const AccountPage: React.FC = () => {
                           : ord.status === 'DISPATCHED'
                           ? 'bg-blue-100 text-blue-800'
                           : ord.status === 'CRAFTING'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-linen-deep text-ink'
+                          ? 'bg-purple-100 text-purple-800'
+                          : ord.status === 'CANCELLED'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-amber-100 text-amber-800'
                       }`}>
                         {ord.status.replace('_', ' ')}
                       </span>

@@ -16,6 +16,7 @@ interface ProductContextType {
   seedInitialCatalog: () => Promise<number>;
   createOrder: (order: Order) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status'], artisanNotes?: string) => Promise<void>;
+  deleteOrder: (orderId: string) => Promise<void>;
   recordVisitorPageview: (page: string, action?: string) => void;
   formatPrice: (price: number) => string;
   refreshAll: () => Promise<void>;
@@ -185,6 +186,15 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const deleteOrder = async (orderId: string) => {
+    setOrders((prev) => prev.filter((o) => o.orderId !== orderId));
+    try {
+      await api.deleteOrder(orderId);
+    } catch (e) {
+      console.warn('Firestore deleteOrder warning:', e);
+    }
+  };
+
   const recordVisitorPageview = (page: string, action: string = 'Viewed Page') => {
     const newLog: VisitorLog = {
       id: `log-${Date.now()}`,
@@ -229,6 +239,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
         seedInitialCatalog,
         createOrder,
         updateOrderStatus,
+        deleteOrder,
         recordVisitorPageview,
         formatPrice,
         refreshAll

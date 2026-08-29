@@ -44,6 +44,7 @@ export const AdminPortalPage: React.FC = () => {
     deleteProduct, 
     seedInitialCatalog,
     updateOrderStatus,
+    deleteOrder,
     formatPrice 
   } = useProducts();
 
@@ -117,6 +118,21 @@ export const AdminPortalPage: React.FC = () => {
       console.error('Failed to update status', err);
     } finally {
       setIsUpdatingStatus(null);
+    }
+  };
+
+  const handleAdminDeleteOrder = async (ord: Order) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete order #${ord.orderId} placed by ${ord.customer?.fullName || 'Client'}?\n\nThis will remove the order completely from Firestore.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteOrder(ord.orderId);
+      setStatusUpdateToast(`Order #${ord.orderId} deleted permanently.`);
+      setTimeout(() => setStatusUpdateToast(null), 4000);
+    } catch (err) {
+      console.error('Failed to delete order:', err);
     }
   };
 
@@ -739,12 +755,13 @@ export const AdminPortalPage: React.FC = () => {
                       PENDING_CONFIRMATION: 'bg-amber-100 text-amber-800 border-amber-200',
                       CRAFTING: 'bg-purple-100 text-purple-800 border-purple-200',
                       DISPATCHED: 'bg-blue-100 text-blue-800 border-blue-200',
-                      DELIVERED: 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                      DELIVERED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                      CANCELLED: 'bg-rose-100 text-rose-800 border-rose-200'
                     };
 
                     const rawPhone = ord.customer?.phoneNumber?.replace(/\D/g, '') || '';
                     const cleanPhone = rawPhone.startsWith('92') ? rawPhone : (rawPhone.startsWith('0') ? `92${rawPhone.slice(1)}` : `92${rawPhone}`);
-                    const whatsAppUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Assalam-o-Alaikum ${ord.customer?.fullName || ''}! We received your order #${ord.orderId} for Rs. ${ord.total?.toLocaleString()} at The Aesthetic Palette. We are preparing your parcel!`)}`;
+                    const whatsAppUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Assalam-o-Alaikum ${ord.customer?.fullName || ''}! Regarding your order #${ord.orderId} at The Aesthetic Palette:`)}`;
 
                     return (
                       <div
@@ -777,6 +794,7 @@ export const AdminPortalPage: React.FC = () => {
                               <option value="CRAFTING">Crafting by Artisan</option>
                               <option value="DISPATCHED">Dispatched for Delivery</option>
                               <option value="DELIVERED">Delivered & Paid</option>
+                              <option value="CANCELLED">Cancelled</option>
                             </select>
                           </div>
                         </div>
@@ -829,10 +847,10 @@ export const AdminPortalPage: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* Quick Status Buttons */}
+                            {/* Quick Status and Actions Buttons */}
                             <div className="pt-2 border-t border-[#E5E0D8]/60 flex flex-wrap items-center gap-1.5">
-                              <span className="text-[10px] font-bold text-gray-500 mr-1">Quick Update:</span>
-                              {ord.status !== 'CRAFTING' && (
+                              <span className="text-[10px] font-bold text-gray-500 mr-1">Actions:</span>
+                              {ord.status !== 'CRAFTING' && ord.status !== 'CANCELLED' && (
                                 <button
                                   disabled={isUpdatingStatus === ord.orderId}
                                   onClick={() => handleAdminOrderStatusChange(ord, 'CRAFTING')}
@@ -841,7 +859,7 @@ export const AdminPortalPage: React.FC = () => {
                                   Crafting
                                 </button>
                               )}
-                              {ord.status !== 'DISPATCHED' && (
+                              {ord.status !== 'DISPATCHED' && ord.status !== 'CANCELLED' && (
                                 <button
                                   disabled={isUpdatingStatus === ord.orderId}
                                   onClick={() => handleAdminOrderStatusChange(ord, 'DISPATCHED')}
@@ -850,7 +868,7 @@ export const AdminPortalPage: React.FC = () => {
                                   Dispatch
                                 </button>
                               )}
-                              {ord.status !== 'DELIVERED' && (
+                              {ord.status !== 'DELIVERED' && ord.status !== 'CANCELLED' && (
                                 <button
                                   disabled={isUpdatingStatus === ord.orderId}
                                   onClick={() => handleAdminOrderStatusChange(ord, 'DELIVERED')}
@@ -859,6 +877,24 @@ export const AdminPortalPage: React.FC = () => {
                                   Mark Delivered
                                 </button>
                               )}
+                              {ord.status !== 'CANCELLED' && ord.status !== 'DELIVERED' && (
+                                <button
+                                  disabled={isUpdatingStatus === ord.orderId}
+                                  onClick={() => handleAdminOrderStatusChange(ord, 'CANCELLED')}
+                                  className="px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[10px] border border-rose-200 transition-colors"
+                                >
+                                  Cancel Order
+                                </button>
+                              )}
+                              <button
+                                disabled={isUpdatingStatus === ord.orderId}
+                                onClick={() => handleAdminDeleteOrder(ord)}
+                                className="px-2 py-1 rounded bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[10px] border border-red-200 transition-colors ml-auto flex items-center gap-1"
+                                title="Permanently delete order from database"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Delete</span>
+                              </button>
                             </div>
                           </div>
                         </div>

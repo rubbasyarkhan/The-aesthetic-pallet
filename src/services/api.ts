@@ -125,6 +125,10 @@ export const api = {
     await firestoreService.updateOrderStatus(orderId, status, artisanNotes);
   },
 
+  async deleteOrder(orderId: string): Promise<void> {
+    await firestoreService.deleteOrder(orderId);
+  },
+
   // ================= VISITOR LOGS (FIRESTORE) =================
   async getVisitorLogs(): Promise<VisitorLog[]> {
     return await firestoreService.getVisitorLogs();

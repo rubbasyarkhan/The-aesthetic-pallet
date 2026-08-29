@@ -208,6 +208,11 @@ export const firestoreService = {
     await updateDoc(docRef, updatePayload);
   },
 
+  async deleteOrder(orderId: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.ORDERS, orderId);
+    await deleteDoc(docRef);
+  },
+
   // ---- REVIEWS ----
   async getProductReviews(productId: string): Promise<Review[]> {
     try {

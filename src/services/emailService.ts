@@ -137,6 +137,10 @@ export const emailService = {
       DELIVERED: {
         title: 'Delivered & Completed 🎉',
         message: 'Your parcel has been delivered! We hope these handcrafted treasures bring warmth to your cozy spaces.'
+      },
+      CANCELLED: {
+        title: 'Order Cancelled',
+        message: 'Your order has been cancelled. If you have any questions or would like to re-order, please message us directly on WhatsApp.'
       }
     };
 

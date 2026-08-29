@@ -103,7 +103,7 @@ export interface Order {
   total: number;
   customer: CheckoutFormData;
   estimatedDeliveryDate: string;
-  status: 'PENDING_CONFIRMATION' | 'CRAFTING' | 'DISPATCHED' | 'DELIVERED';
+  status: 'PENDING_CONFIRMATION' | 'CRAFTING' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED';
   artisanNotes?: string;
 }
 
