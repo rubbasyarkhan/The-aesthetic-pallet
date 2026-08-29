@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingBag, Menu, X, Search, User as UserIcon } from 'lucide-react';
+import { InstagramIcon } from '../common/InstagramIcon';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import brandLogo from '../../assets/logo.png';
@@ -20,11 +21,23 @@ export const Header: React.FC = () => {
     { name: 'Custom Request', path: '/custom-commissions' },
   ];
 
+  const INSTAGRAM_URL = 'https://www.instagram.com/__theaestheticpalette?igsi=N2h2cGR4cGx2Y3Rx';
+
   return (
     <header className="sticky top-0 z-40 w-full bg-linen/90 backdrop-blur-md border-b border-linen-deep/60">
       {/* Top Simple Micro-Bar */}
-      <div className="bg-ink-sepia text-linen-light text-[11px] py-1.5 px-4 text-center tracking-wider font-medium">
-        Handmade with love · Cash on Delivery nationwide
+      <div className="bg-ink-sepia text-linen-light text-[11px] py-1.5 px-4 text-center tracking-wider font-medium flex items-center justify-center gap-2">
+        <span>Handmade with love · Cash on Delivery nationwide</span>
+        <span className="hidden sm:inline opacity-40">|</span>
+        <a
+          href={INSTAGRAM_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:inline-flex items-center gap-1 hover:text-blush-light transition-colors text-[10px] font-semibold"
+        >
+          <InstagramIcon className="w-3 h-3" />
+          <span>@__theaestheticpalette</span>
+        </a>
       </div>
 
       {/* Main Clean Navbar */}
@@ -78,8 +91,20 @@ export const Header: React.FC = () => {
             })}
           </nav>
 
-          {/* Right: Search, Account & Cart */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Right: Instagram, Search, Account & Cart */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Instagram Social Icon Link */}
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-ink-muted hover:text-[#E4405F] hover:bg-white/80 rounded-full transition-all"
+              title="Follow The Aesthetic Palette on Instagram"
+              aria-label="Instagram"
+            >
+              <InstagramIcon className="w-4 h-4" />
+            </a>
+
             <button
               onClick={() => setSearchOpen(!searchOpen)}
               className="hidden md:flex p-2 text-ink-muted hover:text-ink transition-colors"
@@ -166,6 +191,15 @@ export const Header: React.FC = () => {
               {link.name}
             </Link>
           ))}
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 py-2 text-xs font-bold text-[#E4405F]"
+          >
+            <InstagramIcon className="w-4 h-4" />
+            <span>Follow on Instagram (@__theaestheticpalette)</span>
+          </a>
         </div>
       )}
     </header>

@@ -44,6 +44,14 @@
         "priceRange": "$$"
       }
     </script>
+    <style>
+      [data-netlify-drawer], [id*="netlify"], [class*="netlify"], iframe[src*="netlify"], .netlify-badge, #netlify-badge {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    </style>
   </head>
   <body class="bg-linen text-ink font-sans antialiased selection:bg-terracotta/20 selection:text-terracotta-dark min-h-screen flex flex-col">
     <div id="root" class="flex-1 flex flex-col"></div>

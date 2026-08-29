@@ -75,3 +75,18 @@
 .editorial-card {
   @apply bg-linen-light rounded-organic-lg border border-linen-deep/80 transition-all duration-300 hover:shadow-soft hover:border-linen-dark;
 }
+
+/* Remove / Suppress any Netlify Badge or Drawer overlays */
+[data-netlify-drawer],
+[id*="netlify"],
+[class*="netlify"],
+iframe[src*="netlify"],
+.netlify-badge,
+#netlify-badge,
+a[href*="netlify.com"] img,
+a[href*="netlify.app"] img {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

@@ -5,6 +5,7 @@
 
 [build.environment]
   NPM_FLAGS = "--include=dev"
+  NETLIFY_ENABLE_DRAWER = "false"
 
 [[redirects]]
   from = "/api/*"

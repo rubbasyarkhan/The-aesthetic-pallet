@@ -10,11 +10,14 @@ import {
   MessageCircle,
   PackageCheck
 } from 'lucide-react';
+import { InstagramIcon } from '../common/InstagramIcon';
 import brandLogo from '../../assets/logo.png';
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+
+  const INSTAGRAM_URL = 'https://www.instagram.com/__theaestheticpalette?igsi=N2h2cGR4cGx2Y3Rx';
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,13 +79,22 @@ export const Footer: React.FC = () => {
             <p className="text-xs text-ink-muted leading-relaxed max-w-sm">
               An artisanal workshop dedicated to everlasting crochet flowers, soft cotton wearables, and bespoke oil portraits of the ones you love.
             </p>
-            <div className="text-[11px] text-ink-faint pt-2 space-y-1.5">
+            <div className="text-[11px] text-ink-faint pt-2 space-y-2">
               <p className="flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-terracotta" /> hello@theaestheticpalette.com
               </p>
               <p className="flex items-center gap-1.5">
                 <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" /> WhatsApp Studio: +92 317 2072623
               </p>
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-ink hover:text-[#E4405F] font-semibold transition-colors pt-1"
+              >
+                <InstagramIcon className="w-4 h-4 text-[#E4405F]" />
+                <span>Instagram: @__theaestheticpalette</span>
+              </a>
             </div>
           </div>
 
@@ -158,10 +170,20 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Bottom Modern Copyright & Badges */}
+      {/* 4. Bottom Modern Copyright & Socials */}
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-ink-faint gap-3">
         <p>© {new Date().getFullYear()} The Aesthetic Palette. Slow-crafted with intention.</p>
         <div className="flex items-center gap-4">
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-[#E4405F] text-ink font-semibold transition-colors"
+          >
+            <InstagramIcon className="w-3.5 h-3.5 text-[#E4405F]" />
+            <span>Instagram</span>
+          </a>
+          <span>•</span>
           <span>Nationwide Cash on Delivery</span>
           <span>•</span>
           <span>Zero Plastic Waste</span>
