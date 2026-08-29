@@ -26,28 +26,23 @@ import {
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { Product, Order, Review, User, VisitorLog } from '../types';
 
-// Web Firebase Configuration from environment variables
+// Web Firebase Configuration with direct live defaults for reliable Netlify builds
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyBSQsOhWoLAe0vrzOXABvU0IQ7D_Y5fn54',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'the-aesthetic-palette-ryk.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'the-aesthetic-palette-ryk',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'the-aesthetic-palette-ryk.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '311232710879',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:311232710879:web:4a1ddcf9af20487786816a',
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
 };
 
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey && 
   firebaseConfig.projectId &&
-  firebaseConfig.apiKey !== 'AIzaSy...'
+  firebaseConfig.apiKey !== 'AIzaSy...' &&
+  firebaseConfig.apiKey.length > 20
 );
-
-if (!isFirebaseConfigured) {
-  console.warn(
-    '⚠️ Firebase credentials not configured or using default placeholders. Please fill in your VITE_FIREBASE_* keys in .env'
-  );
-}
 
 // Initialize Firebase App singleton safely
 export const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
