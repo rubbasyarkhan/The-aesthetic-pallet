@@ -102,9 +102,10 @@ export const Footer: React.FC = () => {
           <div className="md:col-span-2 space-y-2.5">
             <h4 className="text-xs font-bold uppercase tracking-widest text-ink">Shop Drops</h4>
             <ul className="space-y-2 text-xs text-ink-muted">
-              <li><Link to="/products?category=crochet-flowers" className="hover:text-terracotta transition-colors">Crochet Roses</Link></li>
+              <li><Link to="/products?category=crochet-bags" className="hover:text-terracotta transition-colors">Bags & Totes</Link></li>
+              <li><Link to="/products?category=crochet-flowers" className="hover:text-terracotta transition-colors">Crochet Flowers</Link></li>
               <li><Link to="/products?category=crochet-keychains" className="hover:text-terracotta transition-colors">Keychains & Clips</Link></li>
-              <li><Link to="/products?category=crochet-wear" className="hover:text-terracotta transition-colors">Cloud Sweaters</Link></li>
+              <li><Link to="/products?category=crochet-wear" className="hover:text-terracotta transition-colors">Wearables</Link></li>
               <li><Link to="/products?category=paintings" className="hover:text-terracotta transition-colors">Oil Paintings</Link></li>
               <li><Link to="/custom-commissions" className="hover:text-terracotta transition-colors">Custom Portraits</Link></li>
             </ul>

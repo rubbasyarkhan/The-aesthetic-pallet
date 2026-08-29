@@ -110,14 +110,18 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Bottom Quick Feature Strip */}
-              <div className="p-4 grid grid-cols-3 gap-2 bg-[#FAF7F2] border-t border-linen-deep text-center text-xs">
+              <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#FAF7F2] border-t border-linen-deep text-center text-xs">
                 <Link to="/products?category=crochet-flowers" className="p-2 rounded-lg bg-white border border-linen-deep hover:border-terracotta transition-colors">
                   <p className="font-serif font-bold text-ink truncate">Crochet Flowers</p>
                   <p className="text-[10px] text-terracotta">From Rs. 3,200</p>
                 </Link>
-                <Link to="/products?category=crochet-wear" className="p-2 rounded-lg bg-white border border-linen-deep hover:border-terracotta transition-colors">
-                  <p className="font-serif font-bold text-ink truncate">Wear & Totes</p>
-                  <p className="text-[10px] text-terracotta">From Rs. 3,800</p>
+                <Link to="/products?category=crochet-bags" className="p-2 rounded-lg bg-white border border-linen-deep hover:border-terracotta transition-colors">
+                  <p className="font-serif font-bold text-ink truncate">Bags & Totes</p>
+                  <p className="text-[10px] text-terracotta">From Rs. 4,200</p>
+                </Link>
+                <Link to="/products?category=crochet-keychains" className="p-2 rounded-lg bg-white border border-linen-deep hover:border-terracotta transition-colors">
+                  <p className="font-serif font-bold text-ink truncate">Keychains</p>
+                  <p className="text-[10px] text-terracotta">From Rs. 1,800</p>
                 </Link>
                 <Link to="/custom-commissions" className="p-2 rounded-lg bg-white border border-linen-deep hover:border-terracotta transition-colors">
                   <p className="font-serif font-bold text-ink truncate">Custom Portraits</p>

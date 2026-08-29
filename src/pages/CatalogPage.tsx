@@ -11,7 +11,8 @@ import {
   Gift, 
   Home, 
   Smile, 
-  Layers
+  Layers,
+  ShoppingBag
 } from 'lucide-react';
 import { OCCASIONS_LIST } from '../data/products';
 import { Category, Occasion } from '../types';
@@ -42,10 +43,11 @@ export const CatalogPage: React.FC = () => {
 
   const categories: { id: Category; label: string; icon: React.ReactNode }[] = [
     { id: 'all', label: 'All Items', icon: <Layers className="w-3.5 h-3.5" /> },
-    { id: 'crochet-flowers', label: 'Crochet Roses', icon: <Flower2 className="w-3.5 h-3.5 text-terracotta" /> },
+    { id: 'crochet-bags', label: 'Bags & Totes', icon: <ShoppingBag className="w-3.5 h-3.5 text-terracotta" /> },
+    { id: 'crochet-flowers', label: 'Flowers & Bouquets', icon: <Flower2 className="w-3.5 h-3.5 text-terracotta" /> },
     { id: 'crochet-keychains', label: 'Keychains & Charms', icon: <Key className="w-3.5 h-3.5 text-terracotta" /> },
     { id: 'hair-accessories', label: 'Hair Clips & Bows', icon: <Scissors className="w-3.5 h-3.5 text-terracotta" /> },
-    { id: 'crochet-wear', label: 'Sweaters & Hats', icon: <Shirt className="w-3.5 h-3.5 text-terracotta" /> },
+    { id: 'crochet-wear', label: 'Wearables & Sweaters', icon: <Shirt className="w-3.5 h-3.5 text-terracotta" /> },
     { id: 'paintings', label: 'Oil Paintings', icon: <Palette className="w-3.5 h-3.5 text-terracotta" /> },
     { id: 'custom-portraits', label: 'Loved Ones Portraits', icon: <Heart className="w-3.5 h-3.5 text-terracotta" /> },
     { id: 'gift-sets', label: 'Gift Sets', icon: <Gift className="w-3.5 h-3.5 text-terracotta" /> },

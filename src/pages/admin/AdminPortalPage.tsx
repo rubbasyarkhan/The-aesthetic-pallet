@@ -556,10 +556,11 @@ export const AdminPortalPage: React.FC = () => {
                     className="px-3 py-2 text-xs rounded-xl border border-[#D1D5DB] bg-[#FAFAFA] text-[#1F2421] focus:bg-white focus:outline-none focus:border-[#C06C4D]"
                   >
                     <option value="all">All Categories</option>
-                    <option value="crochet-flowers">Crochet Roses & Flowers</option>
+                    <option value="crochet-bags">Crochet Bags & Totes</option>
+                    <option value="crochet-flowers">Crochet Flowers & Bouquets</option>
                     <option value="crochet-keychains">Keychains & Charms</option>
                     <option value="hair-accessories">Hair Clips & Bows</option>
-                    <option value="crochet-wear">Sweaters & Hats</option>
+                    <option value="crochet-wear">Wearables & Sweaters</option>
                     <option value="paintings">Oil Canvas Paintings</option>
                     <option value="custom-portraits">Loved Ones Portraits</option>
                     <option value="gift-sets">Gift Sets</option>
@@ -1501,10 +1502,11 @@ export const AdminPortalPage: React.FC = () => {
                       onChange={(e) => setNewCategory(e.target.value as Category)}
                       className="w-full px-3 py-2 rounded-xl border border-[#D1D5DB] bg-[#FAFAFA] text-[#1F2421] focus:bg-white focus:outline-none focus:border-[#C06C4D]"
                     >
-                      <option value="crochet-flowers">Crochet Roses & Flowers</option>
+                      <option value="crochet-bags">Crochet Bags & Totes</option>
+                      <option value="crochet-flowers">Crochet Flowers & Bouquets</option>
                       <option value="crochet-keychains">Keychains & Charms</option>
                       <option value="hair-accessories">Hair Clips & Bows</option>
-                      <option value="crochet-wear">Sweaters & Hats</option>
+                      <option value="crochet-wear">Wearables & Sweaters</option>
                       <option value="paintings">Oil Canvas Paintings</option>
                       <option value="custom-portraits">Loved Ones Portraits</option>
                       <option value="gift-sets">Gift Sets</option>

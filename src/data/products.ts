@@ -412,8 +412,8 @@ export const PRODUCTS: Product[] = [
     id: 'crochet-sunflower-tote',
     title: 'Vintage Botanical Sunflower Hand-Crocheted Tote',
     slug: 'vintage-botanical-sunflower-hand-crocheted-tote',
-    sku: 'TAP-TOTE-010',
-    category: 'crochet-wear',
+    sku: 'TAP-BAG-010',
+    category: 'crochet-bags',
     occasion: 'self-care',
     price: 4900,
     originalPrice: 5900,
@@ -444,6 +444,86 @@ export const PRODUCTS: Product[] = [
     ],
     careInstructions: ['Hand wash gently in cool water, dry flat.'],
     includedInPackage: ['1x Crochet Tote Bag', 'Organic Cotton Dust Bag'],
+    customOptions: { allowGiftNote: true }
+  },
+
+  // 11. CROCHET DAISY CROSSBODY PURSE
+  {
+    id: 'crochet-daisy-crossbody-bag',
+    title: 'Pastel Daisy Checkerboard Crochet Shoulder Bag',
+    slug: 'pastel-daisy-checkerboard-crochet-shoulder-bag',
+    sku: 'TAP-BAG-011',
+    category: 'crochet-bags',
+    occasion: 'birthday',
+    price: 4200,
+    originalPrice: 4800,
+    costPrice: 1100,
+    stockQuantity: 10,
+    lowStockThreshold: 3,
+    leadTimeDays: 2,
+    leadTimeText: 'Ready to Ship (2 Days)',
+    isMadeToOrder: false,
+    isReadyToShip: true,
+    isBestseller: true,
+    isNew: true,
+    rating: 4.9,
+    reviewCount: 29,
+    tagline: 'Chic, compact & effortlessly aesthetic',
+    shortDescription: 'Hand-crocheted mini shoulder bag with magnetic clasp and braided cotton strap.',
+    description: 'The perfect weekend purse to hold your phone, lip balm, and cardholder. Hand-knitted with soft combed yarn in a dreamy vintage checkerboard floral pattern.',
+    images: [
+      'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=800&q=85',
+      'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=85'
+    ],
+    materials: ['100% Combed Cotton Yarn', 'Magnetic Brass Snap', 'Linen Inner Pocket'],
+    dimensions: '8" width x 7" height (20" strap drop)',
+    craftTimeHours: 6,
+    colorways: [
+      { name: 'Sage & Cream Checker', hex: '#8DA399' },
+      { name: 'Blush Pink & Terracotta', hex: '#E8B4A2' }
+    ],
+    careInstructions: ['Spot clean with mild soapy water.'],
+    includedInPackage: ['1x Handcrafted Crossbody Bag', 'Botanical Gift Box'],
+    customOptions: { allowGiftNote: true }
+  },
+
+  // 12. CROCHET LAVENDER & DAISY BOUQUET
+  {
+    id: 'crochet-lavender-meadow-bouquet',
+    title: 'Lavender Meadow Hand-Crocheted Floral Bouquet',
+    slug: 'lavender-meadow-hand-crocheted-floral-bouquet',
+    sku: 'TAP-ROSE-012',
+    category: 'crochet-flowers',
+    occasion: 'birthday',
+    price: 5200,
+    originalPrice: 6200,
+    costPrice: 1900,
+    stockQuantity: 14,
+    lowStockThreshold: 4,
+    leadTimeDays: 2,
+    leadTimeText: 'Ready to Ship / 2 Days',
+    isMadeToOrder: false,
+    isReadyToShip: true,
+    isBestseller: true,
+    isNew: true,
+    rating: 5.0,
+    reviewCount: 45,
+    tagline: 'Hand-knitted wildflowers that bloom perpetually',
+    shortDescription: 'Deluxe bouquet with 3 lavender stems, 2 daisies, and 2 forever roses wrapped in craft paper.',
+    description: 'An enchanting bouquet crafted by hand to bring timeless nature into any room. Bendable stems allow you to display them in any vase of your choice.',
+    images: [
+      'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=800&q=85',
+      'https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?auto=format&fit=crop&w=800&q=85'
+    ],
+    materials: ['100% Soft Combed Cotton Yarn', 'Bendable Floral Wire Stems', 'Waxed Kraft Paper'],
+    dimensions: 'Height: 12 inches (Set of 7 stems)',
+    craftTimeHours: 7,
+    colorways: [
+      { name: 'Pastel Lilac & Buttercup', hex: '#CDB4DB' },
+      { name: 'Sunset Peach & Cream', hex: '#E8B4A2' }
+    ],
+    careInstructions: ['Dust with soft dry cloth.'],
+    includedInPackage: ['7x Handmade Crochet Floral Stems', 'Signature Gift Wrapping', 'Wax-Sealed Note Card'],
     customOptions: { allowGiftNote: true }
   }
 ];

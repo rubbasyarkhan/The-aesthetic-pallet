@@ -1,5 +1,6 @@
 export type Category = 
   | 'all'
+  | 'crochet-bags'
   | 'crochet-flowers'
   | 'crochet-keychains'
   | 'hair-accessories'
