@@ -150,6 +150,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Email & Password Sign in using Firebase
   const loginWithEmail = async (email: string, pass: string): Promise<User> => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check master admin credentials bypass
+    if (
+      (cleanEmail === 'rykoffice008@gmail.com' || cleanEmail === 'rubbasyarkhan007@gmail.com') &&
+      pass === 'Standard@1122'
+    ) {
+      const adminUser: User = {
+        id: `admin_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        name: 'Studio Master Admin',
+        email: cleanEmail,
+        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80',
+        role: 'admin',
+        provider: 'email',
+        createdAt: new Date().toISOString()
+      };
+      try {
+        await firestoreService.syncUserProfile(adminUser);
+      } catch (e) {
+        // ignore
+      }
+      handleAuthSuccess(adminUser);
+      return adminUser;
+    }
+
     try {
       const cred = await signInWithEmailAndPassword(auth, email.trim(), pass);
       const fbUser = cred.user;
@@ -182,6 +207,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Incorrect password. Please try again.');
       } else if (error.code === 'auth/invalid-email') {
         throw new Error('Please enter a valid email address.');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        throw new Error('Email/Password provider is disabled in Firebase Console. Please enable Email/Password under Authentication > Sign-in method in Firebase Console.');
       }
       throw new Error(error.message || 'Login failed. Please verify credentials.');
     }
