@@ -106,6 +106,7 @@ export const AdminPortalPage: React.FC = () => {
   // Status update notification state
   const [statusUpdateToast, setStatusUpdateToast] = useState<string | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+  const [isSavingProduct, setIsSavingProduct] = useState<boolean>(false);
 
   const handleAdminOrderStatusChange = async (ord: Order, newStatus: Order['status']) => {
     setIsUpdatingStatus(ord.orderId);
@@ -257,68 +258,82 @@ export const AdminPortalPage: React.FC = () => {
     setNewColorways((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newPrice) return;
-
-    const parsedPrice = parseFloat(newPrice) || 3000;
-    const parsedStock = parseInt(newStock) || 0;
-    const parsedCost = parseFloat(newCostPrice) || 0;
-    const parsedLowThresh = parseInt(newLowStockThreshold) || 5;
-    const splitMaterials = newMaterials.split(',').map((m) => m.trim()).filter(Boolean);
-
-    if (editingProductId) {
-      updateProduct(editingProductId, {
-        title: newTitle,
-        sku: newSku,
-        category: newCategory,
-        occasion: newOccasion,
-        price: parsedPrice,
-        originalPrice: newOrigPrice ? parseFloat(newOrigPrice) : undefined,
-        costPrice: parsedCost,
-        stockQuantity: parsedStock,
-        lowStockThreshold: parsedLowThresh,
-        tagline: newTagline,
-        leadTimeText: newLeadTime,
-        craftTimeHours: parseInt(newCraftHours) || 3,
-        images: newImages,
-        description: newDescription,
-        materials: splitMaterials,
-        colorways: newColorways,
-        isMadeToOrder: newIsMadeToOrder,
-        isReadyToShip: !newIsMadeToOrder
-      });
-    } else {
-      addProduct({
-        title: newTitle,
-        slug: newTitle.toLowerCase().replace(/\s+/g, '-'),
-        sku: newSku,
-        category: newCategory,
-        occasion: newOccasion,
-        price: parsedPrice,
-        originalPrice: newOrigPrice ? parseFloat(newOrigPrice) : undefined,
-        costPrice: parsedCost,
-        stockQuantity: parsedStock,
-        lowStockThreshold: parsedLowThresh,
-        leadTimeDays: 2,
-        leadTimeText: newLeadTime,
-        isMadeToOrder: newIsMadeToOrder,
-        isReadyToShip: !newIsMadeToOrder,
-        rating: 5.0,
-        reviewCount: 1,
-        tagline: newTagline,
-        shortDescription: newTagline,
-        description: newDescription,
-        images: newImages,
-        materials: splitMaterials.length > 0 ? splitMaterials : ['100% Organic Cotton'],
-        craftTimeHours: parseInt(newCraftHours) || 3,
-        colorways: newColorways,
-        careInstructions: ['Handle with gentle care.'],
-        includedInPackage: ['1x Handmade Item', 'Artisan Seed Paper Note']
-      });
+    if (!newTitle.trim() || !newPrice) {
+      alert('Please enter a valid product title and price.');
+      return;
     }
 
-    setIsModalOpen(false);
+    setIsSavingProduct(true);
+    try {
+      const parsedPrice = parseFloat(newPrice) || 3000;
+      const parsedStock = parseInt(newStock) || 0;
+      const parsedCost = parseFloat(newCostPrice) || 0;
+      const parsedLowThresh = parseInt(newLowStockThreshold) || 5;
+      const splitMaterials = newMaterials.split(',').map((m) => m.trim()).filter(Boolean);
+      const parsedOrigPrice = newOrigPrice.trim() ? parseFloat(newOrigPrice) : undefined;
+
+      if (editingProductId) {
+        await updateProduct(editingProductId, {
+          title: newTitle.trim(),
+          sku: newSku.trim(),
+          category: newCategory,
+          occasion: newOccasion,
+          price: parsedPrice,
+          originalPrice: parsedOrigPrice,
+          costPrice: parsedCost,
+          stockQuantity: parsedStock,
+          lowStockThreshold: parsedLowThresh,
+          tagline: newTagline.trim() || `${newTitle} handcrafted with love`,
+          leadTimeText: newLeadTime.trim() || 'Ready to Ship / 2 Days',
+          craftTimeHours: parseInt(newCraftHours) || 3,
+          images: newImages.filter(Boolean),
+          description: newDescription.trim() || 'A cozy handmade creation crafted from organic combed cotton.',
+          materials: splitMaterials.length > 0 ? splitMaterials : ['100% Organic Cotton'],
+          colorways: newColorways,
+          isMadeToOrder: newIsMadeToOrder,
+          isReadyToShip: !newIsMadeToOrder
+        });
+        setStatusUpdateToast(`✨ Product "${newTitle}" updated successfully in database!`);
+      } else {
+        await addProduct({
+          title: newTitle.trim(),
+          slug: newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+          sku: newSku.trim() || `TAP-${Math.floor(100 + Math.random() * 900)}`,
+          category: newCategory,
+          occasion: newOccasion,
+          price: parsedPrice,
+          originalPrice: parsedOrigPrice,
+          costPrice: parsedCost,
+          stockQuantity: parsedStock,
+          lowStockThreshold: parsedLowThresh,
+          leadTimeDays: 2,
+          leadTimeText: newLeadTime.trim() || 'Ready to Ship / 2 Days',
+          isMadeToOrder: newIsMadeToOrder,
+          isReadyToShip: !newIsMadeToOrder,
+          rating: 5.0,
+          reviewCount: 1,
+          tagline: newTagline.trim() || `${newTitle} handcrafted with love`,
+          shortDescription: newTagline.trim() || `${newTitle} handcrafted with love`,
+          description: newDescription.trim() || 'A cozy handmade creation crafted from organic combed cotton.',
+          images: newImages.filter(Boolean),
+          materials: splitMaterials.length > 0 ? splitMaterials : ['100% Organic Cotton'],
+          craftTimeHours: parseInt(newCraftHours) || 3,
+          colorways: newColorways,
+          careInstructions: ['Handle with gentle care.'],
+          includedInPackage: ['1x Handmade Item', 'Artisan Seed Paper Note']
+        });
+        setStatusUpdateToast(`🎉 Creation "${newTitle}" saved & published live to database!`);
+      }
+      setTimeout(() => setStatusUpdateToast(null), 5000);
+      setIsModalOpen(false);
+    } catch (err: any) {
+      console.error('Failed to save product:', err);
+      alert(`Could not save product: ${err?.message || 'Database write error'}`);
+    } finally {
+      setIsSavingProduct(false);
+    }
   };
 
   const handleQuickStockAdjust = (id: string, currentStock: number, delta: number) => {
@@ -511,6 +526,17 @@ export const AdminPortalPage: React.FC = () => {
 
         {/* Dynamic Content Body */}
         <main className="p-6 lg:p-8 space-y-6 flex-1 max-w-7xl w-full mx-auto">
+          {/* Global Notification Toast */}
+          {statusUpdateToast && (
+            <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 p-4 rounded-2xl flex items-center justify-between shadow-xs animate-fade-in">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span className="text-xs font-bold">{statusUpdateToast}</span>
+              </div>
+              <button onClick={() => setStatusUpdateToast(null)} className="text-xs text-emerald-700 hover:underline">Dismiss</button>
+            </div>
+          )}
+
           {/* TAB 1: INVENTORY & PRODUCTS CRUD */}
           {activeTab === 'inventory' && (
             <div className="space-y-6">
@@ -1576,9 +1602,13 @@ export const AdminPortalPage: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="py-2.5 px-6 bg-[#C06C4D] hover:bg-[#A95A3E] text-white rounded-xl font-bold shadow-md transition-all active:scale-98"
+                    disabled={isSavingProduct}
+                    className="py-2.5 px-6 bg-[#C06C4D] hover:bg-[#A95A3E] text-white rounded-xl font-bold shadow-md transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    Save & Publish Creation
+                    {isSavingProduct && (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    )}
+                    <span>{isSavingProduct ? 'Saving to Database...' : (editingProductId ? 'Update Creation' : 'Save & Publish Creation')}</span>
                   </button>
                 </div>
               </div>

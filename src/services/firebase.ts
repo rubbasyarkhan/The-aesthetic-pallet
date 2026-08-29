@@ -74,6 +74,30 @@ export const visitorLogsCol = collection(db, COLLECTIONS.VISITOR_LOGS);
 // FIRESTORE SERVICES & REPOSITORIES
 // ==========================================
 
+function sanitizeForFirestore<T>(data: T): T {
+  if (data === undefined) {
+    return null as unknown as T;
+  }
+  if (data === null) {
+    return null as unknown as T;
+  }
+  if (Array.isArray(data)) {
+    return data
+      .filter((item) => item !== undefined)
+      .map((item) => sanitizeForFirestore(item)) as unknown as T;
+  }
+  if (typeof data === 'object' && !(data instanceof Date)) {
+    const cleaned: Record<string, any> = {};
+    for (const [k, v] of Object.entries(data as Record<string, any>)) {
+      if (v !== undefined) {
+        cleaned[k] = sanitizeForFirestore(v);
+      }
+    }
+    return cleaned as T;
+  }
+  return data;
+}
+
 export const firestoreService = {
   // ---- PRODUCTS ----
   async getProducts(): Promise<Product[]> {
@@ -103,8 +127,9 @@ export const firestoreService = {
   },
 
   async addProduct(product: Omit<Product, 'id'>): Promise<Product> {
+    const cleaned = sanitizeForFirestore(product);
     const docRef = await addDoc(productsCol, {
-      ...product,
+      ...cleaned,
       createdAt: serverTimestamp()
     });
     return {
@@ -115,8 +140,9 @@ export const firestoreService = {
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.PRODUCTS, id);
+    const cleaned = sanitizeForFirestore(updates);
     await updateDoc(docRef, {
-      ...updates,
+      ...cleaned,
       updatedAt: serverTimestamp()
     });
   },
@@ -170,11 +196,11 @@ export const firestoreService = {
   async createOrder(order: Order): Promise<Order> {
     // If order has orderId, use setDoc or addDoc
     const orderDocRef = order.orderId ? doc(db, COLLECTIONS.ORDERS, order.orderId) : doc(ordersCol);
-    const orderData = {
+    const orderData = sanitizeForFirestore({
       ...order,
       orderId: orderDocRef.id,
       createdAt: order.createdAt || new Date().toISOString()
-    };
+    });
     await setDoc(orderDocRef, orderData);
 
     // Decrement stock for ordered items in Firestore
