@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Mail, ShieldAlert, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { firestoreService } from '../../services/firebase';
+import { useAuth, ADMIN_EMAILS } from '../../context/AuthContext';
 
 interface AdminLoginGateProps {
   onLoginSuccess: () => void;
@@ -21,52 +20,13 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onLoginSuccess }
 
     const inputEmail = email.trim().toLowerCase();
 
-    // 1. Direct Master Admin Authorization Check
-    const isMasterAdmin = 
-      (inputEmail === 'rykoffice008@gmail.com' || 
-       inputEmail === 'rubbasyarkhan007@gmail.com' || 
-       inputEmail === 'admin@theaestheticpalette.com') && 
-      password === 'Standard@1122';
-
-    if (isMasterAdmin) {
-      const adminSession = {
-        authenticated: true,
-        email: inputEmail,
-        id: `admin_${inputEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-        role: 'admin',
-        loginTime: new Date().toISOString()
-      };
-
-      localStorage.setItem(
-        'the_aesthetic_palette_admin_session_v2',
-        JSON.stringify(adminSession)
-      );
-
-      try {
-        await firestoreService.syncUserProfile({
-          id: adminSession.id,
-          name: 'Studio Master Admin',
-          email: inputEmail,
-          role: 'admin',
-          provider: 'email',
-          createdAt: new Date().toISOString()
-        });
-      } catch (syncErr) {
-        console.warn('Admin profile background sync notice:', syncErr);
-      }
-
-      onLoginSuccess();
-      setLoading(false);
-      return;
-    }
-
-    // 2. Firebase Auth Check for other configured admin accounts
     try {
+      // Authenticate directly through Firebase Authentication
       const loggedUser = await loginWithEmail(email.trim(), password);
+
       const isAuthorizedAdmin = 
         loggedUser.role === 'admin' || 
-        inputEmail === 'rykoffice008@gmail.com' ||
-        inputEmail === 'rubbasyarkhan007@gmail.com' ||
+        ADMIN_EMAILS.includes(inputEmail) ||
         inputEmail.includes('admin');
 
       if (isAuthorizedAdmin) {
@@ -81,13 +41,18 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onLoginSuccess }
         );
         onLoginSuccess();
       } else {
-        setError('Your account does not have administrative privileges.');
+        setError(`Access denied. Account (${loggedUser.email}) is not configured as an administrator.`);
       }
     } catch (err: any) {
+      console.error('Admin authentication error:', err);
       if (err.code === 'auth/operation-not-allowed' || err.message?.includes('operation-not-allowed')) {
-        setError('Please check your admin credentials. Password or email is incorrect.');
+        setError('Email/Password login is not enabled in Firebase Console. Please go to Firebase Console > Authentication > Sign-in method and enable Email/Password.');
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        setError('Invalid admin email or password. Please verify your credentials.');
+      } else if (err.code === 'auth/wrong-password') {
+        setError('Incorrect password. Please try again.');
       } else {
-        setError(err.message || 'Authentication failed. Please verify admin credentials.');
+        setError(err.message || 'Authentication failed. Please verify your admin credentials.');
       }
     } finally {
       setLoading(false);
@@ -108,7 +73,7 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onLoginSuccess }
           
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#C06C4D]/10 border border-[#C06C4D]/25 text-[#C06C4D] text-[10px] font-bold uppercase tracking-wider">
             <Sparkles className="w-3 h-3" />
-            <span>Studio Security Protected</span>
+            <span>Firebase Security Protected</span>
           </div>
 
           <h1 className="font-serif text-2xl font-bold text-[#1F2421]">
@@ -136,7 +101,7 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onLoginSuccess }
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="rykoffice008@gmail.com"
+                placeholder="Enter admin email address"
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D1D5DB] bg-[#FAFAFA] text-[#1F2421] focus:bg-white focus:outline-none focus:border-[#C06C4D] focus:ring-1 focus:ring-[#C06C4D]"
               />
             </div>
@@ -162,7 +127,7 @@ export const AdminLoginGate: React.FC<AdminLoginGateProps> = ({ onLoginSuccess }
             disabled={loading}
             className="w-full py-3 px-4 bg-[#C06C4D] hover:bg-[#A95A3E] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 disabled:opacity-75"
           >
-            <span>{loading ? 'Authenticating Admin...' : 'Sign In to Studio Portal'}</span>
+            <span>{loading ? 'Authenticating with Firebase...' : 'Sign In to Studio Portal'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
