@@ -32,7 +32,7 @@ export const ProductDetailPage: React.FC = () => {
   const product = products.find((p) => p.id === id || p.slug === id) || products[0];
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product?.colorways[0]?.name || '');
+  const [selectedColor, setSelectedColor] = useState(product?.colorways?.[0]?.name || '');
   const [selectedSize, setSelectedSize] = useState(product?.sizes ? product.sizes[0] : '');
   const [customNotes, setCustomNotes] = useState('');
   const [giftNote, setGiftNote] = useState('');
@@ -54,30 +54,15 @@ export const ProductDetailPage: React.FC = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (product) {
-      recordVisitorPageview(product.title);
+      recordVisitorPageview(product.title || 'Product');
       setActiveImageIndex(0);
-      setSelectedColor(product.colorways[0]?.name || '');
-      setSelectedSize(product.sizes ? product.sizes[0] : '');
+      setSelectedColor(product.colorways?.[0]?.name || '');
+      setSelectedSize(product.sizes?.[0] || '');
 
-      // Load reviews for this product
+      // Load dynamic reviews for this product from Firestore
       api.getProductReviews(product.id).then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setReviews(data);
-        } else {
-          // Default initial verified review
-          setReviews([
-            {
-              id: 'rev-default-1',
-              author: 'Ayesha Malik',
-              rating: 5,
-              location: 'Lahore, Pakistan',
-              date: '2 days ago',
-              comment: 'The craftsmanship on this piece is extraordinary! The stitching is so delicate and soft. Shipped via Cash on Delivery with no issues.',
-              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-              verifiedPurchase: true,
-              productTitle: product.title
-            }
-          ]);
         }
       });
     }
@@ -172,6 +157,18 @@ export const ProductDetailPage: React.FC = () => {
   const whatsappInquiryUrl = `https://wa.me/923172072623?text=${encodeURIComponent(
     `Hi The Aesthetic Palette! 🌸 I am inquiring about "${product.title}" (${formatCurrency(product.price)}). Is this available for Cash on Delivery?`
   )}`;
+
+  if (!product) {
+    return (
+      <div className="w-full max-w-[1440px] mx-auto px-4 py-20 text-center space-y-4">
+        <div className="w-10 h-10 rounded-full border-2 border-terracotta border-t-transparent animate-spin mx-auto" />
+        <p className="text-xs text-ink-muted">Loading handcrafted creation details from studio...</p>
+        <Link to="/products" className="btn-secondary text-xs inline-block mt-4">
+          Browse All Shop Items
+        </Link>
+      </div>
+    );
+  }
 
   const relatedProducts = products.filter((p) => p.id !== product.id).slice(0, 4);
 

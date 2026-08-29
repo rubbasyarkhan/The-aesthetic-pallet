@@ -28,9 +28,10 @@ import {
   Palette
 } from 'lucide-react';
 import { useProducts } from '../../context/ProductContext';
-import { Category, Occasion, Product, ProductColorway } from '../../types';
+import { Category, Occasion, Product, ProductColorway, Order } from '../../types';
 import { AdminLoginGate } from './AdminLoginGate';
 import { api } from '../../services/api';
+import { emailService } from '../../services/emailService';
 
 export const AdminPortalPage: React.FC = () => {
   const { 
@@ -41,7 +42,7 @@ export const AdminPortalPage: React.FC = () => {
     addProduct, 
     updateProduct, 
     deleteProduct, 
-    resetProductsToDefault, 
+    seedInitialCatalog,
     updateOrderStatus,
     formatPrice 
   } = useProducts();
@@ -64,6 +65,8 @@ export const AdminPortalPage: React.FC = () => {
   const [orderSearch, setOrderSearch] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [onlyLowStock, setOnlyLowStock] = useState<boolean>(false);
+  const [seedMessage, setSeedMessage] = useState<string>('');
+  const [isSeeding, setIsSeeding] = useState<boolean>(false);
 
   // Live Visual Studio Modal Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,10 +98,27 @@ export const AdminPortalPage: React.FC = () => {
 
   // Add Color helper state
   const [customColorName, setCustomColorName] = useState('');
-  const [customColorHex, setCustomColorHex] = useState('#E8B4A2');
+  const [customColorHex, setCustomColorHex] = useState('#C06C4D');
   const [customColorStock, setCustomColorStock] = useState('5');
-
   const [previewImageIdx, setPreviewImageIdx] = useState(0);
+
+  // Status update notification state
+  const [statusUpdateToast, setStatusUpdateToast] = useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+
+  const handleAdminOrderStatusChange = async (ord: Order, newStatus: Order['status']) => {
+    setIsUpdatingStatus(ord.orderId);
+    try {
+      await updateOrderStatus(ord.orderId, newStatus);
+      emailService.sendStatusUpdateNotification(ord, newStatus).catch((e) => console.warn(e));
+      setStatusUpdateToast(`Order #${ord.orderId} updated to ${newStatus.replace('_', ' ')}. Notification email sent to client.`);
+      setTimeout(() => setStatusUpdateToast(null), 5000);
+    } catch (err) {
+      console.error('Failed to update status', err);
+    } finally {
+      setIsUpdatingStatus(null);
+    }
+  };
 
   const handleAdminLogout = () => {
     localStorage.removeItem('the_aesthetic_palette_admin_session_v2');
@@ -291,26 +311,32 @@ export const AdminPortalPage: React.FC = () => {
   };
 
   // Inventory computations
-  const totalUnitsInStock = products.reduce((sum, p) => sum + (p.stockQuantity || 0), 0);
-  const lowStockItems = products.filter((p) => (p.stockQuantity || 0) <= (p.lowStockThreshold || 5));
+  const totalUnitsInStock = products.reduce((sum, p) => sum + (p?.stockQuantity || 0), 0);
+  const lowStockItems = products.filter((p) => p && (p.stockQuantity || 0) <= (p.lowStockThreshold || 5));
 
   const filteredProducts = products.filter((p) => {
-    const matchesSearch = 
-      p.title.toLowerCase().includes(productSearch.toLowerCase()) ||
-      p.category.toLowerCase().includes(productSearch.toLowerCase()) ||
-      (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()));
-    
+    if (!p) return false;
+    const title = (p.title || '').toLowerCase();
+    const category = (p.category || '').toLowerCase();
+    const sku = (p.sku || '').toLowerCase();
+    const q = (productSearch || '').toLowerCase();
+
+    const matchesSearch = !q || title.includes(q) || category.includes(q) || sku.includes(q);
     const matchesCategory = selectedCategoryFilter === 'all' || p.category === selectedCategoryFilter;
     const matchesLowStock = !onlyLowStock || ((p.stockQuantity || 0) <= (p.lowStockThreshold || 5));
 
     return matchesSearch && matchesCategory && matchesLowStock;
   });
 
-  const filteredOrders = orders.filter((o) =>
-    o.orderId.toLowerCase().includes(orderSearch.toLowerCase()) ||
-    o.customer.fullName.toLowerCase().includes(orderSearch.toLowerCase()) ||
-    o.customer.city.toLowerCase().includes(orderSearch.toLowerCase())
-  );
+  const filteredOrders = orders.filter((o) => {
+    if (!o) return false;
+    const orderIdStr = (o.orderId || '').toLowerCase();
+    const customerName = (o.customer?.fullName || '').toLowerCase();
+    const customerCity = (o.customer?.city || '').toLowerCase();
+    const q = (orderSearch || '').toLowerCase();
+
+    return !q || orderIdStr.includes(q) || customerName.includes(q) || customerCity.includes(q);
+  });
 
   return (
     <div className="min-h-screen w-full bg-[#FAF7F2] text-[#1F2421] font-sans flex antialiased">
@@ -405,7 +431,7 @@ export const AdminPortalPage: React.FC = () => {
               }`}
             >
               <Database className="w-4 h-4" />
-              <span>MongoDB Atlas & Cloudinary</span>
+              <span>Firebase Cloud & Storage</span>
             </button>
           </nav>
         </div>
@@ -414,7 +440,7 @@ export const AdminPortalPage: React.FC = () => {
         <div className="pt-4 border-t border-[#E5E0D8] space-y-3">
           <div className="px-2 text-xs">
             <p className="font-bold text-[#1F2421] truncate">Studio Master Admin</p>
-            <p className="text-[11px] text-[#6B7280] truncate">rykoffice008@gmail.com</p>
+            <p className="text-[11px] text-[#6B7280] truncate">rubbasyarkhan007@gmail.com</p>
           </div>
 
           <button
@@ -437,7 +463,7 @@ export const AdminPortalPage: React.FC = () => {
             </div>
             <div className="hidden sm:flex items-center gap-2 text-xs text-[#6B7280]">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-semibold text-[#1F2421]">MongoDB Atlas & Cloudinary Synced</span>
+              <span className="font-semibold text-[#1F2421]">Firebase Firestore & Auth Synced</span>
               <span>•</span>
               <span>All Prices in <strong className="text-[#C06C4D]">Pakistani Rupees (Rs.)</strong></span>
             </div>
@@ -536,12 +562,16 @@ export const AdminPortalPage: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={resetProductsToDefault}
+                  onClick={async () => {
+                    if (window.confirm('Import / Seed starter creations into Firestore?')) {
+                      await seedInitialCatalog();
+                    }
+                  }}
                   className="text-xs text-[#6B7280] hover:text-[#1F2421] flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-[#F7F3EE] transition-colors"
-                  title="Reset to default handcrafted dataset"
+                  title="Import starter handcrafted catalog to Firestore"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Reset Demo Data</span>
+                  <span>Seed Catalog to Firestore</span>
                 </button>
               </div>
 
@@ -565,28 +595,32 @@ export const AdminPortalPage: React.FC = () => {
                         const isLow = (p.stockQuantity || 0) <= (p.lowStockThreshold || 5);
                         const isOutOfStock = (p.stockQuantity || 0) === 0;
 
+                        const defaultImg = 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=85';
+                        const thumbImg = (p.images && p.images.length > 0) ? p.images[0] : defaultImg;
+                        const catLabel = (p.category || 'general').replace('-', ' ');
+
                         return (
                           <tr key={p.id} className="hover:bg-[#FAF7F2]/60 transition-colors">
                             <td className="py-3 px-4 flex items-center gap-3">
                               <img
-                                src={p.images[0]}
-                                alt={p.title}
+                                src={thumbImg}
+                                alt={p.title || 'Handmade Creation'}
                                 className="w-12 h-12 rounded-xl object-cover border border-[#E5E0D8] shrink-0"
                               />
                               <div className="min-w-0">
-                                <p className="font-serif font-bold text-[#1F2421] truncate max-w-xs">{p.title}</p>
+                                <p className="font-serif font-bold text-[#1F2421] truncate max-w-xs">{p.title || 'Untitled'}</p>
                                 <p className="font-mono text-[11px] text-[#C06C4D] font-semibold">{p.sku || 'TAP-ITEM'}</p>
                               </div>
                             </td>
 
                             <td className="py-3 px-4 text-[#4B5563]">
                               <span className="px-2.5 py-1 rounded-lg bg-[#FAF7F2] border border-[#E5E0D8] capitalize text-[11px] font-medium">
-                                {p.category.replace('-', ' ')}
+                                {catLabel}
                               </span>
                             </td>
 
                             <td className="py-3 px-4 font-bold text-[#1F2421] text-sm">
-                              {formatPrice(p.price)}
+                              {formatPrice(p.price || 0)}
                               {p.originalPrice && (
                                 <span className="text-[11px] text-[#9CA3AF] line-through ml-1.5 font-normal">
                                   {formatPrice(p.originalPrice)}
@@ -667,6 +701,17 @@ export const AdminPortalPage: React.FC = () => {
           {/* TAB 2: CUSTOMER ORDERS MANAGEMENT */}
           {activeTab === 'orders' && (
             <div className="space-y-4">
+              {/* Notification Toast for Status Email */}
+              {statusUpdateToast && (
+                <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 p-4 rounded-2xl flex items-center justify-between shadow-xs animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <span className="text-xs font-bold">{statusUpdateToast}</span>
+                  </div>
+                  <button onClick={() => setStatusUpdateToast(null)} className="text-xs text-emerald-700 hover:underline">Dismiss</button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-[#E5E0D8] shadow-xs">
                 <div className="relative w-full sm:w-80">
                   <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3 top-2.5" />
@@ -681,66 +726,146 @@ export const AdminPortalPage: React.FC = () => {
                 <span className="text-xs text-[#6B7280] font-semibold">{orders.length} total orders recorded</span>
               </div>
 
-              <div className="space-y-3">
-                {filteredOrders.map((ord) => (
-                  <div
-                    key={ord.orderId}
-                    className="bg-white p-5 rounded-2xl border border-[#E5E0D8] shadow-xs space-y-4"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E5E0D8] text-xs">
-                      <div>
-                        <span className="font-mono font-bold text-[#C06C4D] text-sm">{ord.orderId}</span>
-                        <span className="text-[#6B7280] ml-2 font-medium">
-                          {new Date(ord.createdAt).toLocaleString()}
-                        </span>
-                      </div>
+              <div className="space-y-4">
+                {filteredOrders.length === 0 ? (
+                  <div className="bg-white p-12 text-center rounded-2xl border border-[#E5E0D8] space-y-2">
+                    <Package className="w-8 h-8 text-[#9CA3AF] mx-auto" />
+                    <p className="font-serif font-bold text-base text-[#1F2421]">No orders match your search</p>
+                    <p className="text-xs text-[#6B7280]">All incoming customer orders will appear here automatically.</p>
+                  </div>
+                ) : (
+                  filteredOrders.map((ord) => {
+                    const statusBadgeColors = {
+                      PENDING_CONFIRMATION: 'bg-amber-100 text-amber-800 border-amber-200',
+                      CRAFTING: 'bg-purple-100 text-purple-800 border-purple-200',
+                      DISPATCHED: 'bg-blue-100 text-blue-800 border-blue-200',
+                      DELIVERED: 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    };
 
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-[#1F2421] text-sm">
-                          Total: {formatPrice(ord.total)} (COD)
-                        </span>
-                        
-                        <select
-                          value={ord.status}
-                          onChange={(e) => updateOrderStatus(ord.orderId, e.target.value as any)}
-                          className="px-3 py-1.5 text-xs rounded-xl border border-[#D1D5DB] bg-white font-bold text-[#1F2421] focus:outline-none focus:border-[#C06C4D]"
-                        >
-                          <option value="PENDING_CONFIRMATION">Pending Confirmation</option>
-                          <option value="CRAFTING">Crafting by Artisan</option>
-                          <option value="DISPATCHED">Dispatched for Delivery</option>
-                          <option value="DELIVERED">Delivered & Paid</option>
-                        </select>
-                      </div>
-                    </div>
+                    const rawPhone = ord.customer?.phoneNumber?.replace(/\D/g, '') || '';
+                    const cleanPhone = rawPhone.startsWith('92') ? rawPhone : (rawPhone.startsWith('0') ? `92${rawPhone.slice(1)}` : `92${rawPhone}`);
+                    const whatsAppUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Assalam-o-Alaikum ${ord.customer?.fullName || ''}! We received your order #${ord.orderId} for Rs. ${ord.total?.toLocaleString()} at The Aesthetic Palette. We are preparing your parcel!`)}`;
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                      <div className="space-y-1.5 text-[#4B5563]">
-                        <p className="font-bold text-[#1F2421] text-sm">{ord.customer.fullName}</p>
-                        <p className="flex items-center gap-1.5 font-semibold text-[#C06C4D]">
-                          <Phone className="w-3.5 h-3.5" /> {ord.customer.phoneNumber}
-                        </p>
-                        <p className="flex items-start gap-1.5 text-[#6B7280]">
-                          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                          <span>
-                            {ord.customer.streetAddress}, {ord.customer.city}, {ord.customer.postalCode}
-                          </span>
-                        </p>
-                      </div>
+                    return (
+                      <div
+                        key={ord.orderId}
+                        className="bg-white p-5 rounded-2xl border border-[#E5E0D8] shadow-xs space-y-4 hover:border-[#C06C4D]/40 transition-colors"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E5E0D8] text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-[#C06C4D] text-sm">{ord.orderId}</span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusBadgeColors[ord.status] || 'bg-gray-100 text-gray-800'}`}>
+                              {ord.status?.replace('_', ' ')}
+                            </span>
+                            <span className="text-[#6B7280] ml-1 font-medium">
+                              {new Date(ord.createdAt).toLocaleString()}
+                            </span>
+                          </div>
 
-                      <div className="space-y-1.5 text-xs">
-                        <p className="font-bold text-[#1F2421]">Items in Parcel:</p>
-                        <div className="space-y-1">
-                          {ord.items.map((it, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[#4B5563]">
-                              <span>{it.quantity}x {it.product?.title || 'Handmade Creation'}</span>
-                              <span className="font-semibold text-[#1F2421]">{formatPrice(it.unitPrice * it.quantity)}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-[#1F2421] text-sm">
+                              Total: {formatPrice(ord.total)} (COD)
+                            </span>
+                            
+                            <select
+                              value={ord.status}
+                              disabled={isUpdatingStatus === ord.orderId}
+                              onChange={(e) => handleAdminOrderStatusChange(ord, e.target.value as any)}
+                              className="px-3 py-1.5 text-xs rounded-xl border border-[#D1D5DB] bg-white font-bold text-[#1F2421] focus:outline-none focus:border-[#C06C4D] disabled:opacity-50"
+                            >
+                              <option value="PENDING_CONFIRMATION">Pending Confirmation</option>
+                              <option value="CRAFTING">Crafting by Artisan</option>
+                              <option value="DISPATCHED">Dispatched for Delivery</option>
+                              <option value="DELIVERED">Delivered & Paid</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                          {/* Client Information */}
+                          <div className="space-y-1.5 text-[#4B5563] bg-[#FAFAFA] p-3.5 rounded-xl border border-[#E5E0D8]/60">
+                            <div className="flex items-center justify-between">
+                              <p className="font-bold text-[#1F2421] text-sm">{ord.customer?.fullName || 'Valued Client'}</p>
+                              {ord.userEmail && (
+                                <span className="text-[10px] text-gray-500 font-mono">{ord.userEmail}</span>
+                              )}
                             </div>
-                          ))}
+                            
+                            <div className="flex items-center gap-3 pt-0.5">
+                              <p className="flex items-center gap-1.5 font-bold text-[#C06C4D]">
+                                <Phone className="w-3.5 h-3.5" /> {ord.customer?.phoneNumber || 'No phone provided'}
+                              </p>
+                              {rawPhone && (
+                                <a
+                                  href={whatsAppUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-md hover:bg-emerald-700 transition-colors"
+                                >
+                                  WhatsApp Client
+                                </a>
+                              )}
+                            </div>
+
+                            <p className="flex items-start gap-1.5 text-[#6B7280] pt-1">
+                              <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                              <span>
+                                {ord.customer?.streetAddress || ''}{ord.customer?.apartmentSuite ? `, ${ord.customer.apartmentSuite}` : ''}, {ord.customer?.city || 'Pakistan'}, {ord.customer?.postalCode || ''}
+                              </span>
+                            </p>
+                          </div>
+
+                          {/* Parcel Items & Quick Status Bar */}
+                          <div className="space-y-2 text-xs bg-[#FAFAFA] p-3.5 rounded-xl border border-[#E5E0D8]/60 flex flex-col justify-between">
+                            <div>
+                              <p className="font-bold text-[#1F2421] mb-1">Items in Parcel:</p>
+                              <div className="space-y-1 max-h-24 overflow-y-auto">
+                                {(ord.items || []).map((it, idx) => (
+                                  <div key={idx} className="flex items-center justify-between text-[#4B5563]">
+                                    <span className="truncate pr-2">{it.quantity || 1}x {it.product?.title || 'Handmade Creation'}</span>
+                                    <span className="font-semibold text-[#1F2421] shrink-0">{formatPrice((it.unitPrice || 0) * (it.quantity || 1))}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Quick Status Buttons */}
+                            <div className="pt-2 border-t border-[#E5E0D8]/60 flex flex-wrap items-center gap-1.5">
+                              <span className="text-[10px] font-bold text-gray-500 mr-1">Quick Update:</span>
+                              {ord.status !== 'CRAFTING' && (
+                                <button
+                                  disabled={isUpdatingStatus === ord.orderId}
+                                  onClick={() => handleAdminOrderStatusChange(ord, 'CRAFTING')}
+                                  className="px-2 py-1 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[10px] border border-purple-200 transition-colors"
+                                >
+                                  Crafting
+                                </button>
+                              )}
+                              {ord.status !== 'DISPATCHED' && (
+                                <button
+                                  disabled={isUpdatingStatus === ord.orderId}
+                                  onClick={() => handleAdminOrderStatusChange(ord, 'DISPATCHED')}
+                                  className="px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] border border-blue-200 transition-colors"
+                                >
+                                  Dispatch
+                                </button>
+                              )}
+                              {ord.status !== 'DELIVERED' && (
+                                <button
+                                  disabled={isUpdatingStatus === ord.orderId}
+                                  onClick={() => handleAdminOrderStatusChange(ord, 'DELIVERED')}
+                                  className="px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] border border-emerald-200 transition-colors"
+                                >
+                                  Mark Delivered
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
@@ -818,40 +943,165 @@ export const AdminPortalPage: React.FC = () => {
 
           {/* TAB 4: CUSTOMER DIRECTORY */}
           {activeTab === 'customers' && (
-            <div className="bg-white rounded-2xl p-6 border border-[#E5E0D8] space-y-4 shadow-xs">
-              <h3 className="font-serif text-base font-bold text-[#1F2421]">Registered Studio Clients</h3>
-              <p className="text-xs text-[#6B7280]">Clients who have placed Cash on Delivery orders.</p>
+            <div className="bg-white rounded-2xl p-6 border border-[#E5E0D8] space-y-5 shadow-xs">
+              <div className="flex items-center justify-between border-b border-[#E5E0D8] pb-3">
+                <div>
+                  <h3 className="font-serif text-base font-bold text-[#1F2421]">Registered Studio Clients & Directory</h3>
+                  <p className="text-xs text-[#6B7280]">All verified customers who have registered or placed Cash on Delivery orders.</p>
+                </div>
+                <span className="text-xs font-bold text-[#C06C4D] bg-[#FAF7F2] px-3 py-1 rounded-full border border-[#E5E0D8]">
+                  {Array.from(new Set((orders || []).map((o) => o.customer?.phoneNumber || o.userEmail || o.customer?.fullName))).filter(Boolean).length} Unique Clients
+                </span>
+              </div>
 
               <div className="divide-y divide-[#E5E0D8] text-xs">
-                {orders.map((ord, i) => (
-                  <div key={i} className="py-3.5 flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-[#1F2421]">{ord.customer.fullName}</p>
-                      <p className="text-[#6B7280]">{ord.userEmail || ord.customer.phoneNumber} · {ord.customer.city}</p>
-                    </div>
-                    <span className="text-emerald-700 font-bold font-mono">
-                      Order {ord.orderId} ({formatPrice(ord.total)})
-                    </span>
+                {orders.length === 0 ? (
+                  <div className="py-8 text-center text-[#6B7280]">
+                    <Users className="w-8 h-8 mx-auto text-[#9CA3AF] mb-2" />
+                    <p className="font-bold text-[#1F2421]">No clients recorded yet</p>
+                    <p className="text-xs">Client records are created automatically when orders or registrations occur.</p>
                   </div>
-                ))}
+                ) : (
+                  Array.from(
+                    (orders || []).reduce((map, ord) => {
+                      const key = ord.customer?.phoneNumber || ord.userEmail || ord.customer?.fullName || ord.orderId;
+                      if (!map.has(key)) {
+                        map.set(key, {
+                          name: ord.customer?.fullName || 'Valued Client',
+                          email: ord.userEmail || ord.customer?.email || 'N/A',
+                          phone: ord.customer?.phoneNumber || 'N/A',
+                          city: ord.customer?.city || 'Pakistan',
+                          address: `${ord.customer?.streetAddress || ''}, ${ord.customer?.city || ''}`,
+                          orderCount: 1,
+                          totalSpent: ord.total || 0,
+                          latestOrderId: ord.orderId
+                        });
+                      } else {
+                        const existing = map.get(key)!;
+                        existing.orderCount += 1;
+                        existing.totalSpent += ord.total || 0;
+                      }
+                      return map;
+                    }, new Map<string, any>()).values()
+                  ).map((client, idx) => {
+                    const rawPhone = client.phone.replace(/\D/g, '');
+                    const cleanPhone = rawPhone.startsWith('92') ? rawPhone : (rawPhone.startsWith('0') ? `92${rawPhone.slice(1)}` : `92${rawPhone}`);
+                    const waLink = `https://wa.me/${cleanPhone}`;
+
+                    return (
+                      <div key={idx} className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-[#FAF7F2]/50 px-2 rounded-xl transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#E5E0D8] flex items-center justify-center font-serif font-bold text-sm text-[#1F2421]">
+                            {client.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-[#1F2421] text-sm">{client.name}</p>
+                            <p className="text-[#6B7280] text-xs">
+                              {client.email !== 'N/A' && <span className="font-mono mr-2">{client.email}</span>}
+                              <span>📍 {client.city}</span>
+                            </p>
+                            <p className="text-[11px] text-[#9CA3AF] mt-0.5">{client.address}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 self-end sm:self-center">
+                          <div className="text-right">
+                            <span className="font-bold text-[#1F2421] text-xs block">{formatPrice(client.totalSpent)}</span>
+                            <span className="text-[10px] text-[#6B7280]">{client.orderCount} Order{client.orderCount > 1 ? 's' : ''}</span>
+                          </div>
+                          {rawPhone && (
+                            <a
+                              href={waLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors"
+                            >
+                              WhatsApp
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
 
-          {/* TAB 5: MONGODB & SYSTEM CONFIG */}
+          {/* TAB 5: FIREBASE FIRESTORE & SYSTEM CONFIG */}
           {activeTab === 'database' && (
-            <div className="bg-white rounded-2xl p-6 border border-[#E5E0D8] space-y-4 max-w-2xl text-xs shadow-xs">
-              <h3 className="font-serif text-base font-bold text-[#1F2421] flex items-center gap-2">
-                <Database className="w-5 h-5 text-emerald-600" />
-                <span>MongoDB Atlas & Cloudinary Storage</span>
-              </h3>
+            <div className="bg-white rounded-2xl p-6 border border-[#E5E0D8] space-y-5 max-w-2xl text-xs shadow-xs">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif text-base font-bold text-[#1F2421] flex items-center gap-2">
+                  <Database className="w-5 h-5 text-emerald-600" />
+                  <span>Firebase Cloud Firestore & Storage</span>
+                </h3>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider border border-emerald-200 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  <span>Real-time Active</span>
+                </span>
+              </div>
 
-              <div className="p-4 bg-[#FAF7F2] rounded-xl border border-[#E5E0D8] space-y-2.5 font-mono text-[11px]">
-                <p className="text-emerald-700 font-bold">● Database Engine: MongoDB Atlas (astheticpallettest)</p>
+              {/* Firestore Metrics Summary */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-[#FAF7F2] rounded-xl border border-[#E5E0D8] text-center">
+                  <span className="text-[10px] text-[#6B7280] uppercase font-bold block">Products</span>
+                  <span className="text-base font-bold text-[#1F2421] font-mono">{products.length}</span>
+                </div>
+                <div className="p-3 bg-[#FAF7F2] rounded-xl border border-[#E5E0D8] text-center">
+                  <span className="text-[10px] text-[#6B7280] uppercase font-bold block">Orders</span>
+                  <span className="text-base font-bold text-[#1F2421] font-mono">{orders.length}</span>
+                </div>
+                <div className="p-3 bg-[#FAF7F2] rounded-xl border border-[#E5E0D8] text-center">
+                  <span className="text-[10px] text-[#6B7280] uppercase font-bold block">Visitor Logs</span>
+                  <span className="text-base font-bold text-[#1F2421] font-mono">{visitorLogs.length}</span>
+                </div>
+              </div>
+
+              {/* Seeding Action Box */}
+              <div className="p-4 bg-[#FAF7F2] rounded-xl border border-[#E5E0D8] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-[#1F2421]">Firestore Starter Data Utility</h4>
+                    <p className="text-[11px] text-[#6B7280]">
+                      Instantly upload the handcrafted starter collection directly into your Firebase Firestore collection.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isSeeding}
+                    onClick={async () => {
+                      setIsSeeding(true);
+                      setSeedMessage('Uploading creations to Firebase Firestore...');
+                      try {
+                        const count = await seedInitialCatalog();
+                        setSeedMessage(`✨ Successfully populated Firestore with ${count} handcrafted products!`);
+                      } catch (e: any) {
+                        setSeedMessage('Seeding note: ' + (e.message || 'Complete'));
+                      } finally {
+                        setIsSeeding(false);
+                      }
+                    }}
+                    className="py-2 px-4 bg-[#C06C4D] hover:bg-[#A95A3E] text-white rounded-xl font-bold transition-all disabled:opacity-50 shrink-0 flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isSeeding ? 'Seeding...' : 'Seed Catalog to Firestore'}</span>
+                  </button>
+                </div>
+
+                {seedMessage && (
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-[11px] font-semibold">
+                    {seedMessage}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-[#FAF7F2] rounded-xl border border-[#E5E0D8] space-y-2 font-mono text-[11px]">
+                <p className="text-emerald-700 font-bold">● Project ID: the-aesthetic-palette-ryk</p>
+                <p className="text-[#4B5563]">● Firestore Collections: <span className="text-[#C06C4D] font-bold">products, orders, reviews, users, visitor_logs</span></p>
                 <p className="text-[#4B5563]">● Cloudinary CDN Cloud: <span className="text-[#C06C4D] font-bold">wweasl6y</span></p>
-                <p className="text-[#4B5563]">● Admin Email: <span className="text-[#C06C4D] font-bold">rykoffice008@gmail.com</span></p>
                 <p className="text-[#4B5563]">● Order Alert Destination: <span className="text-emerald-700 font-bold">rubbasyarkhan007@gmail.com</span></p>
-                <p className="text-[#4B5563]">● WhatsApp Contact: <span className="text-[#25D366] font-bold">+92 317 2072623</span></p>
+                <p className="text-[#4B5563]">● WhatsApp Studio: <span className="text-[#25D366] font-bold">+92 317 2072623</span></p>
               </div>
             </div>
           )}

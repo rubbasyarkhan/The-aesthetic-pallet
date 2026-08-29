@@ -43,6 +43,7 @@ export const CartDrawer: React.FC = () => {
 
   const [formData, setFormData] = useState<CheckoutFormData>({
     fullName: '',
+    email: '',
     phoneNumber: '',
     streetAddress: '',
     apartmentSuite: '',
@@ -58,6 +59,7 @@ export const CartDrawer: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         fullName: prev.fullName || user.name || '',
+        email: prev.email || user.email || '',
         phoneNumber: prev.phoneNumber || user.phone || '',
         streetAddress: prev.streetAddress || user.savedAddress?.streetAddress || '',
         apartmentSuite: prev.apartmentSuite || user.savedAddress?.apartmentSuite || '',
@@ -206,8 +208,8 @@ export const CartDrawer: React.FC = () => {
                       >
                         {/* Thumbnail */}
                         <img
-                          src={item.product.images[0]}
-                          alt={item.product.title}
+                          src={(item.product?.images && item.product.images.length > 0) ? item.product.images[0] : 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=85'}
+                          alt={item.product?.title || 'Creation'}
                           className="w-20 h-24 object-cover rounded-organic-sm bg-linen-surface shrink-0 border border-linen-deep/60"
                         />
 

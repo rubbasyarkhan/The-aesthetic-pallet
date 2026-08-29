@@ -81,6 +81,7 @@ export interface CartItem {
 
 export interface CheckoutFormData {
   fullName: string;
+  email?: string;
   phoneNumber: string;
   streetAddress: string;
   apartmentSuite?: string;
@@ -126,7 +127,7 @@ export interface User {
   email: string;
   avatar?: string;
   role: 'customer' | 'admin';
-  provider: 'google' | 'email';
+  provider: 'google' | 'email' | 'guest_demo';
   createdAt: string;
   phone?: string;
   savedAddress?: {

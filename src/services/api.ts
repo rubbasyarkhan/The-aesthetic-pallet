@@ -1,173 +1,136 @@
-import { Product, Order, Review } from '../types';
+import { Product, Order, Review, VisitorLog } from '../types';
+import { firestoreService } from './firebase';
 
-const isLocalhostDev = typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '3000';
-const API_BASE = isLocalhostDev ? 'http://localhost:5000/api' : '/api';
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'wweasl6y';
 
 export const api = {
-  // Admin Login via Database
-  async adminLogin(email: string, password: string): Promise<{ success: boolean; token?: string; admin?: any; message?: string }> {
+  // ================= CLOUDINARY & IMAGE UPLOADS =================
+  async uploadImage(base64OrFile: string): Promise<string> {
     try {
-      const res = await fetch(`${API_BASE}/admin/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      return data;
-    } catch (e: any) {
-      console.warn('API login request failed, falling back:', e);
-      return { success: false, message: 'Could not connect to authentication server' };
-    }
-  },
+      // If already a hosted URL, return directly
+      if (base64OrFile.startsWith('http://') || base64OrFile.startsWith('https://')) {
+        return base64OrFile;
+      }
 
-  // Cloudinary Upload
-  async uploadImage(base64Image: string): Promise<string> {
-    try {
-      const res = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64Image })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Upload failed');
-      return data.url;
+      // Direct Cloudinary upload via unsigned preset
+      if (base64OrFile.startsWith('data:image') || base64OrFile.startsWith('blob:')) {
+        const presets = ['aesthetic_palette', 'ml_default', 'unsigned', 'preset1'];
+        
+        for (const preset of presets) {
+          try {
+            const formData = new FormData();
+            formData.append('file', base64OrFile);
+            formData.append('upload_preset', preset);
+
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+              method: 'POST',
+              body: formData
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              if (data.secure_url) {
+                console.log(`☁️ Cloudinary upload successful with preset "${preset}":`, data.secure_url);
+                return data.secure_url;
+              }
+            }
+          } catch (presetError) {
+            // continue to next preset
+          }
+        }
+      }
+      return base64OrFile;
     } catch (e: any) {
-      console.error('Image upload failed, using local blob/fallback', e);
-      return base64Image;
+      console.warn('Cloudinary upload warning, using local buffer:', e);
+      return base64OrFile;
     }
   },
 
   async uploadMultipleImages(base64Images: string[]): Promise<string[]> {
     try {
-      const res = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: base64Images })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Upload failed');
-      return data.urls;
+      const uploadPromises = base64Images.map((img) => this.uploadImage(img));
+      return await Promise.all(uploadPromises);
     } catch (e: any) {
-      console.error('Multi-image upload failed', e);
+      console.warn('Multiple upload fallback:', e);
       return base64Images;
     }
   },
 
   async deleteImage(url: string): Promise<void> {
-    try {
-      await fetch(`${API_BASE}/delete-image`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
-      });
-    } catch (e) {
-      console.warn('Delete image fallback', e);
-    }
+    // Cloudinary client deletions require signature, no-op on client for security
+    console.log('Image reference removed:', url);
   },
 
-  // Product Reviews
+  // ================= PRODUCT REVIEWS (FIRESTORE) =================
   async getProductReviews(productId: string): Promise<Review[]> {
-    try {
-      const res = await fetch(`${API_BASE}/products/${productId}/reviews`);
-      if (!res.ok) throw new Error('Failed to fetch reviews');
-      return await res.json();
-    } catch (e) {
-      console.warn('Reviews API offline, using local store:', e);
-      return [];
-    }
+    return await firestoreService.getProductReviews(productId);
   },
 
-  async submitProductReview(productId: string, reviewData: {
-    author: string;
-    rating: number;
-    comment: string;
-    location?: string;
-    images?: string[];
-  }): Promise<Review> {
-    const res = await fetch(`${API_BASE}/products/${productId}/reviews`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(reviewData)
+  async getFeaturedReviews(count: number = 6): Promise<Review[]> {
+    return await firestoreService.getFeaturedReviews(count);
+  },
+
+  async submitProductReview(
+    productId: string,
+    reviewData: {
+      author: string;
+      rating: number;
+      comment: string;
+      location?: string;
+      images?: string[];
+      avatar?: string;
+    }
+  ): Promise<Review> {
+    return await firestoreService.submitProductReview(productId, {
+      ...reviewData,
+      location: reviewData.location || 'Pakistan',
+      date: 'Just now',
+      verifiedPurchase: true,
+      avatar: reviewData.avatar || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(reviewData.author)}`
     });
-    return await res.json();
   },
 
-  // Products API
+  // ================= PRODUCTS CRUD (FIRESTORE) =================
   async getProducts(): Promise<Product[]> {
-    try {
-      const res = await fetch(`${API_BASE}/products`);
-      if (!res.ok) throw new Error('API request failed');
-      const data = await res.json();
-      return data.map((item: any) => ({
-        ...item,
-        id: item._id || item.id
-      }));
-    } catch (e) {
-      console.warn('Backend API offline, using local store:', e);
-      return [];
-    }
+    return await firestoreService.getProducts();
   },
 
   async createProduct(product: Omit<Product, 'id'>): Promise<Product> {
-    const res = await fetch(`${API_BASE}/products`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product)
-    });
-    const data = await res.json();
-    return { ...data, id: data._id || data.id };
+    return await firestoreService.addProduct(product);
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
-    const res = await fetch(`${API_BASE}/products/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-    const data = await res.json();
-    return { ...data, id: data._id || data.id };
+    await firestoreService.updateProduct(id, updates);
+    return { id, ...updates } as Product;
   },
 
   async updateStock(id: string, stockQuantity: number): Promise<void> {
-    await fetch(`${API_BASE}/products/${id}/stock`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stockQuantity })
-    });
+    await firestoreService.updateStock(id, stockQuantity);
   },
 
   async deleteProduct(id: string): Promise<void> {
-    await fetch(`${API_BASE}/products/${id}`, {
-      method: 'DELETE'
-    });
+    await firestoreService.deleteProduct(id);
   },
 
-  // Orders API
+  // ================= ORDERS (FIRESTORE) =================
   async getOrders(): Promise<Order[]> {
-    try {
-      const res = await fetch(`${API_BASE}/orders`);
-      if (!res.ok) throw new Error('API request failed');
-      return await res.json();
-    } catch (e) {
-      console.warn('Orders API offline, using local store:', e);
-      return [];
-    }
+    return await firestoreService.getOrders();
   },
 
   async createOrder(order: Order): Promise<Order> {
-    const res = await fetch(`${API_BASE}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    });
-    return await res.json();
+    return await firestoreService.createOrder(order);
   },
 
-  async updateOrderStatus(orderId: string, status: string): Promise<void> {
-    await fetch(`${API_BASE}/orders/${orderId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
-    });
+  async updateOrderStatus(orderId: string, status: Order['status'], artisanNotes?: string): Promise<void> {
+    await firestoreService.updateOrderStatus(orderId, status, artisanNotes);
+  },
+
+  // ================= VISITOR LOGS (FIRESTORE) =================
+  async getVisitorLogs(): Promise<VisitorLog[]> {
+    return await firestoreService.getVisitorLogs();
+  },
+
+  async logVisitor(log: VisitorLog): Promise<void> {
+    await firestoreService.addVisitorLog(log);
   }
 };

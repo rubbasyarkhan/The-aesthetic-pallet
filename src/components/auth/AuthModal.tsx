@@ -42,7 +42,7 @@ export const AuthModal: React.FC = () => {
     try {
       await loginWithGoogle();
     } catch (err: any) {
-      setError('Google login failed');
+      setError(err.message || 'Google sign in failed. Please try again or sign in with email.');
     } finally {
       setLoading(false);
     }

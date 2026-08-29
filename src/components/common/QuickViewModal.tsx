@@ -13,8 +13,8 @@ export const QuickViewModal: React.FC = () => {
   if (!quickViewProduct) return null;
 
   const product = quickViewProduct;
-  const currentColor = selectedColor || product.colorways[0]?.name || '';
-  const currentSize = selectedSize || (product.sizes ? product.sizes[0] : '');
+  const currentColor = selectedColor || product?.colorways?.[0]?.name || '';
+  const currentSize = selectedSize || (product?.sizes ? product.sizes[0] : '');
 
   const handleAdd = () => {
     addToCart(product, 1, {
@@ -23,6 +23,9 @@ export const QuickViewModal: React.FC = () => {
     });
     setQuickViewProduct(null);
   };
+
+  const defaultImg = 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=85';
+  const currentImg = product?.images?.[activeImageIndex] || product?.images?.[0] || defaultImg;
 
   return (
     <AnimatePresence>
@@ -57,12 +60,12 @@ export const QuickViewModal: React.FC = () => {
           <div className="p-4 sm:p-6 bg-linen flex flex-col justify-between space-y-4">
             <div className="aspect-4/5 rounded-organic overflow-hidden bg-linen-surface border border-linen-deep/80">
               <img
-                src={product.images[activeImageIndex] || product.images[0]}
-                alt={product.title}
+                src={currentImg}
+                alt={product?.title || 'Handmade Item'}
                 className="w-full h-full object-cover object-center"
               />
             </div>
-            {product.images.length > 1 && (
+            {product?.images && product.images.length > 1 && (
               <div className="flex gap-2 justify-center">
                 {product.images.map((img: string, idx: number) => (
                   <button

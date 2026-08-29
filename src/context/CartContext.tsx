@@ -3,6 +3,7 @@ import { CartItem, Product, CartItemCustomization, CheckoutFormData, Order } fro
 import confetti from 'canvas-confetti';
 import { useAuth } from './AuthContext';
 import { useProducts } from './ProductContext';
+import { emailService } from '../services/emailService';
 
 export interface CartToast {
   title: string;
@@ -169,22 +170,33 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const placeCashOnDeliveryOrder = (customer: CheckoutFormData): Order => {
     const orderId = `TAP-COD-${Math.floor(10000 + Math.random() * 90000)}`;
 
+    const enrichedCustomer = {
+      ...customer,
+      email: customer.email || user?.email || ''
+    };
+
     const newOrder: Order = {
       orderId,
       userId: user?.id,
-      userEmail: user?.email,
+      userEmail: user?.email || customer.email,
       createdAt: new Date().toISOString(),
       items: [...cart],
       subtotal,
       shipping,
       packagingCost,
       total,
-      customer,
+      customer: enrichedCustomer,
       estimatedDeliveryDate: 'In 2-4 Business Days',
       status: 'PENDING_CONFIRMATION'
     };
 
     createOrder(newOrder);
+    
+    // Asynchronously dispatch comprehensive order email to rubbasyarkhan007@gmail.com and client
+    emailService.sendNewOrderNotification(newOrder).catch((err) => {
+      console.warn('Email dispatch background notice:', err);
+    });
+
     clearCart();
     setIsCartOpen(false);
 

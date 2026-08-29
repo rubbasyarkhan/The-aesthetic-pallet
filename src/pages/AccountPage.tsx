@@ -51,8 +51,13 @@ export const AccountPage: React.FC = () => {
   }
 
   // Filter orders for this user
-  const userOrders = orders.filter(
-    (o) => o.userEmail === user.email || o.userId === user.id || o.customer.phoneNumber === user.phone
+  const userOrders = (orders || []).filter(
+    (o) =>
+      o &&
+      ((user.email && o.userEmail?.toLowerCase() === user.email.toLowerCase()) ||
+        (user.id && o.userId === user.id) ||
+        (user.email && o.customer?.email?.toLowerCase() === user.email.toLowerCase()) ||
+        (user.phone && o.customer?.phoneNumber === user.phone))
   );
 
   return (
@@ -61,14 +66,14 @@ export const AccountPage: React.FC = () => {
       <div className="bg-linen-light rounded-organic-2xl p-6 sm:p-8 border border-linen-deep shadow-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <img
-            src={user.avatar || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(user.name)}`}
-            alt={user.name}
+            src={user.avatar || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(user.name || 'Studio Client')}`}
+            alt={user.name || 'User'}
             className="w-16 h-16 rounded-full object-cover border-2 border-terracotta/40 shadow-xs"
           />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-serif text-xl sm:text-2xl font-semibold text-ink">
-                {user.name}
+                {user.name || 'Valued Studio Client'}
               </h1>
               <span className="px-2 py-0.5 rounded-full bg-sage/20 text-sage-deep text-[10px] font-bold uppercase tracking-wider">
                 Studio Client
@@ -76,7 +81,7 @@ export const AccountPage: React.FC = () => {
             </div>
             <p className="text-xs text-ink-muted">{user.email}</p>
             <p className="text-[11px] text-ink-faint mt-0.5">
-              Member since {new Date(user.createdAt).toLocaleDateString()}
+              Member since {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Recently'}
             </p>
           </div>
         </div>
@@ -223,37 +228,7 @@ export const AccountPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {likedProducts.map((prod) => (
-                <div key={prod.id} className="relative flex flex-col bg-white rounded-organic-lg overflow-hidden border border-linen-deep/60 shadow-2xs hover:shadow-soft transition-all">
-                  <Link to={`/products/${prod.id}`} className="aspect-square w-full overflow-hidden bg-linen-surface block">
-                    <img src={prod.images[0]} alt={prod.title} className="w-full h-full object-cover hover:scale-105 transition-transform" />
-                  </Link>
-
-                  <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
-                    <div>
-                      <Link to={`/products/${prod.id}`} className="font-serif text-xs font-semibold text-ink truncate block hover:text-terracotta">
-                        {prod.title}
-                      </Link>
-                      <p className="text-xs font-bold text-ink mt-0.5">{formatCurrency(prod.price)}</p>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-1 border-t border-linen-deep">
-                      <button
-                        onClick={() => addToCart(prod, 1)}
-                        className="flex-1 py-1.5 px-2.5 bg-ink hover:bg-terracotta text-white rounded text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors"
-                      >
-                        <ShoppingBag className="w-3 h-3" />
-                        <span>Move to Bag</span>
-                      </button>
-                      <button
-                        onClick={() => toggleLike(prod.id)}
-                        className="p-1.5 text-ink-muted hover:text-red-500 rounded hover:bg-linen-deep"
-                        title="Remove from saved"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={prod.id} product={prod} aspectRatioClass="aspect-[4/5]" />
               ))}
             </div>
           )}

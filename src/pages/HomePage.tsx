@@ -86,55 +86,43 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Visual Pinterest Collage */}
-          <div className="lg:col-span-6 grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="space-y-3 sm:space-y-4">
-              <div className="aspect-square rounded-organic-xl overflow-hidden border border-linen-deep shadow-2xs group relative">
+          {/* Right Visual Featured Hero Showcase */}
+          <div className="lg:col-span-6">
+            <div className="relative rounded-organic-xl overflow-hidden border border-linen-deep shadow-md bg-white">
+              <div className="aspect-16/10 sm:aspect-16/9 w-full overflow-hidden relative group">
                 <img
-                  src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=85"
-                  alt="Forever Roses"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1200&q=85"
+                  alt="Artisanal Handcrafted Creations"
+                  className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700"
                 />
-                <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-white/90 backdrop-blur-xs py-1 px-2.5 rounded-organic-sm text-[11px] font-semibold text-ink text-center shadow-2xs flex items-center justify-center gap-1.5">
-                  <Flower2 className="w-3.5 h-3.5 text-terracotta" />
-                  <span>Forever Crochet Roses</span>
+                <div className="absolute inset-0 bg-linear-to-t from-ink/75 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-bold w-fit mb-2 border border-white/30">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Featured Studio Collection</span>
+                  </span>
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold">
+                    Eternal Cotton Roses & Handcrafted Treasures
+                  </h3>
+                  <p className="text-xs text-white/80 mt-1 max-w-md">
+                    Individually hand-stitched by Pakistani artisans with pure combed cotton and textured oil paints.
+                  </p>
                 </div>
               </div>
-              <div className="aspect-4/3 rounded-organic-xl overflow-hidden border border-linen-deep shadow-2xs group relative">
-                <img
-                  src="https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=600&q=85"
-                  alt="Strawberry Charm"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-white/90 backdrop-blur-xs py-1 px-2.5 rounded-organic-sm text-[11px] font-semibold text-ink text-center shadow-2xs flex items-center justify-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-terracotta" />
-                  <span>Keychains & Clips</span>
-                </div>
-              </div>
-            </div>
 
-            <div className="space-y-3 sm:space-y-4 pt-4 sm:pt-6">
-              <div className="aspect-4/3 rounded-organic-xl overflow-hidden border border-linen-deep shadow-2xs group relative">
-                <img
-                  src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=600&q=85"
-                  alt="Cloud Cardigan"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-white/90 backdrop-blur-xs py-1 px-2.5 rounded-organic-sm text-[11px] font-semibold text-ink text-center shadow-2xs flex items-center justify-center gap-1.5">
-                  <Shirt className="w-3.5 h-3.5 text-terracotta" />
-                  <span>Cloud Cardigans</span>
-                </div>
-              </div>
-              <div className="aspect-square rounded-organic-xl overflow-hidden border border-linen-deep shadow-2xs group relative">
-                <img
-                  src="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=85"
-                  alt="Custom Oil Portrait"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-white/90 backdrop-blur-xs py-1 px-2.5 rounded-organic-sm text-[11px] font-semibold text-ink text-center shadow-2xs flex items-center justify-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-terracotta" />
-                  <span>Loved Ones Portraits</span>
-                </div>
+              {/* Bottom Quick Feature Strip */}
+              <div className="p-4 grid grid-cols-3 gap-2 bg-[#FAF7F2] border-t border-linen-deep text-center text-xs">
+                <Link to="/products?category=crochet-flowers" className="p-2 rounded-lg bg-white border border-linen-deep hover:border-terracotta transition-colors">
+                  <p className="font-serif font-bold text-ink truncate">Crochet Flowers</p>
+                  <p className="text-[10px] text-terracotta">From Rs. 3,200</p>
+                </Link>
+                <Link to="/products?category=crochet-wear" className="p-2 rounded-lg bg-white border border-linen-deep hover:border-terracotta transition-colors">
+                  <p className="font-serif font-bold text-ink truncate">Wear & Totes</p>
+                  <p className="text-[10px] text-terracotta">From Rs. 3,800</p>
+                </Link>
+                <Link to="/custom-commissions" className="p-2 rounded-lg bg-white border border-linen-deep hover:border-terracotta transition-colors">
+                  <p className="font-serif font-bold text-ink truncate">Custom Portraits</p>
+                  <p className="text-[10px] text-terracotta">Original Oils</p>
+                </Link>
               </div>
             </div>
           </div>
@@ -162,26 +150,27 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. PINTEREST-STYLE PRODUCT GRID */}
-      <section className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 space-y-4">
-        <div className="flex items-center justify-between">
+      {/* 3. PROFESSIONAL E-COMMERCE PRODUCT GRID */}
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 space-y-6">
+        <div className="flex items-center justify-between border-b border-linen-deep/60 pb-4">
           <div>
-            <h2 className="font-serif text-xl sm:text-2xl font-semibold text-ink">
-              Trending Handmade Pieces
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-ink">
+              Featured Handcrafted Catalog
             </h2>
-            <p className="text-xs text-ink-muted">Popular creations ready to cherish</p>
+            <p className="text-xs text-ink-muted mt-0.5">Authentic artisan creations ready to cherish and gift</p>
           </div>
-          <Link to="/products" className="text-xs font-semibold text-terracotta hover:underline">
-            View All ({products.length}) →
+          <Link to="/products" className="text-xs font-semibold text-terracotta hover:underline flex items-center gap-1">
+            <span>Explore All ({products.length})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {trendingPieces.map((p, idx) => (
+          {trendingPieces.map((p) => (
             <ProductCard
               key={p.id}
               product={p}
-              aspectRatioClass={idx % 2 === 0 ? 'aspect-4/5' : 'aspect-square'}
+              aspectRatioClass="aspect-[4/5]"
             />
           ))}
         </div>

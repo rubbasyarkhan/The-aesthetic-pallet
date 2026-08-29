@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, Order, VisitorLog, AnalyticsSummary } from '../types';
-import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
+import { firestoreService, isFirebaseConfigured } from '../services/firebase';
+import { PRODUCTS as STARTER_PRODUCTS } from '../data/products';
 import { api } from '../services/api';
 
 interface ProductContextType {
@@ -8,105 +9,115 @@ interface ProductContextType {
   orders: Order[];
   visitorLogs: VisitorLog[];
   analytics: AnalyticsSummary;
+  isLoading: boolean;
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
-  resetProductsToDefault: () => Promise<void>;
+  seedInitialCatalog: () => Promise<number>;
   createOrder: (order: Order) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status'], artisanNotes?: string) => Promise<void>;
   recordVisitorPageview: (page: string, action?: string) => void;
   formatPrice: (price: number) => string;
+  refreshAll: () => Promise<void>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-const PRODUCTS_STORAGE_KEY = 'the_aesthetic_palette_products_v3_rs';
-const ORDERS_STORAGE_KEY = 'the_aesthetic_palette_orders_master_v3_rs';
+const PRODUCTS_CACHE_KEY = 'the_aesthetic_palette_products_fb_cache';
+const ORDERS_CACHE_KEY = 'the_aesthetic_palette_orders_fb_cache';
 
 export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-
-  const [visitorLogs, setVisitorLogs] = useState<VisitorLog[]>([
-    {
-      id: 'log-1',
-      timestamp: '1 min ago',
-      city: 'Islamabad',
-      country: 'PK',
-      pageViewed: 'Eternal Bloom Roses',
-      device: 'Mobile iOS',
-      action: 'Added to Bag'
-    },
-    {
-      id: 'log-2',
-      timestamp: '3 mins ago',
-      city: 'Lahore',
-      country: 'PK',
-      pageViewed: 'Custom Oil Portrait',
-      device: 'Desktop Chrome',
-      action: 'Liked Item'
-    },
-    {
-      id: 'log-3',
-      timestamp: '6 mins ago',
-      city: 'Karachi',
-      country: 'PK',
-      pageViewed: 'Shop All Creations',
-      device: 'Mobile Safari',
-      action: 'Filtered by Occasion'
-    }
-  ]);
-
-  // Load from MongoDB Atlas API as single source of truth
-  const refreshProducts = async () => {
+  const [products, setProducts] = useState<Product[]>(() => {
     try {
-      const fetchedProducts = await api.getProducts();
-      if (Array.isArray(fetchedProducts) && fetchedProducts.length > 0) {
-        setProducts(fetchedProducts);
-        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(fetchedProducts));
-      } else {
-        // Fallback to local storage if API is momentarily loading
-        const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-        if (saved) setProducts(JSON.parse(saved));
-        else setProducts(DEFAULT_PRODUCTS);
-      }
-    } catch (e) {
-      console.warn('API fetch warning:', e);
-      const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-      if (saved) setProducts(JSON.parse(saved));
-      else setProducts(DEFAULT_PRODUCTS);
+      const cached = localStorage.getItem(PRODUCTS_CACHE_KEY);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
     }
-  };
+  });
 
-  const refreshOrders = async () => {
+  const [orders, setOrders] = useState<Order[]>(() => {
     try {
-      const fetchedOrders = await api.getOrders();
-      if (Array.isArray(fetchedOrders) && fetchedOrders.length > 0) {
-        setOrders(fetchedOrders);
-        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(fetchedOrders));
-      } else {
-        const saved = localStorage.getItem(ORDERS_STORAGE_KEY);
-        if (saved) setOrders(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.warn('API orders fetch warning:', e);
+      const cached = localStorage.getItem(ORDERS_CACHE_KEY);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
     }
-  };
+  });
 
+  const [visitorLogs, setVisitorLogs] = useState<VisitorLog[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Live real-time Firestore synchronization
   useEffect(() => {
-    refreshProducts();
-    refreshOrders();
+    if (!isFirebaseConfigured) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    // 1. Subscribe to Firestore Products in Real-time
+    const unsubscribeProducts = firestoreService.subscribeProducts((liveProducts) => {
+      setProducts(liveProducts);
+      try {
+        localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(liveProducts));
+      } catch (e) {
+        console.warn('Cache error:', e);
+      }
+      setIsLoading(false);
+    });
+
+    // 2. Subscribe to Firestore Orders in Real-time
+    const unsubscribeOrders = firestoreService.subscribeOrders((liveOrders) => {
+      setOrders(liveOrders);
+      try {
+        localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(liveOrders));
+      } catch (e) {
+        console.warn('Cache error:', e);
+      }
+    });
+
+    // 3. Load dynamic Visitor Logs from Firestore
+    api.getVisitorLogs().then((logs) => {
+      if (Array.isArray(logs) && logs.length > 0) {
+        setVisitorLogs(logs);
+      }
+    });
+
+    return () => {
+      unsubscribeProducts();
+      unsubscribeOrders();
+    };
   }, []);
+
+  const refreshAll = async () => {
+    setIsLoading(true);
+    try {
+      const [prods, ords, logs] = await Promise.all([
+        api.getProducts(),
+        api.getOrders(),
+        api.getVisitorLogs()
+      ]);
+      setProducts(prods);
+      setOrders(ords);
+      setVisitorLogs(logs);
+      localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(prods));
+      localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(ords));
+    } catch (err) {
+      console.warn('Refresh error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const addProduct = async (newProductData: Omit<Product, 'id'>) => {
     try {
       const saved = await api.createProduct(newProductData);
       setProducts((prev) => [saved, ...prev.filter((p) => p.id !== saved.id)]);
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify([saved, ...products]));
     } catch (err) {
-      console.error('Failed to create product on server, saving locally:', err);
-      const fallback: Product = { ...newProductData, id: `tap-${Date.now()}` };
-      setProducts((prev) => [fallback, ...prev]);
+      console.error('Failed to create product in Firestore:', err);
+      throw err;
     }
   };
 
@@ -117,14 +128,9 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
 
     try {
-      const updated = await api.updateProduct(id, updates);
-      if (updated && updated.id) {
-        setProducts((prev) =>
-          prev.map((item) => (item.id === id || item.slug === id ? { ...item, ...updated } : item))
-        );
-      }
+      await api.updateProduct(id, updates);
     } catch (e) {
-      console.warn('Backend updateProduct fallback', e);
+      console.warn('Firestore updateProduct warning:', e);
     }
   };
 
@@ -133,13 +139,28 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       await api.deleteProduct(id);
     } catch (e) {
-      console.warn('Backend deleteProduct fallback', e);
+      console.warn('Firestore deleteProduct warning:', e);
     }
   };
 
-  const resetProductsToDefault = async () => {
-    setProducts(DEFAULT_PRODUCTS);
-    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
+  // One-click starter seed into Firestore
+  const seedInitialCatalog = async (): Promise<number> => {
+    setIsLoading(true);
+    let count = 0;
+    try {
+      for (const starter of STARTER_PRODUCTS) {
+        const { id, ...dataWithoutId } = starter;
+        await api.createProduct(dataWithoutId);
+        count++;
+      }
+      await refreshAll();
+      return count;
+    } catch (err) {
+      console.error('Seed catalog error:', err);
+      return count;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const createOrder = async (order: Order) => {
@@ -147,7 +168,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       await api.createOrder(order);
     } catch (err) {
-      console.warn('Order save fallback', err);
+      console.warn('Order save error:', err);
     }
   };
 
@@ -158,9 +179,9 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
       )
     );
     try {
-      await api.updateOrderStatus(orderId, status);
+      await api.updateOrderStatus(orderId, status, artisanNotes);
     } catch (e) {
-      console.warn('Backend updateOrderStatus fallback', e);
+      console.warn('Firestore updateOrderStatus warning:', e);
     }
   };
 
@@ -171,26 +192,27 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
       city: 'Karachi',
       country: 'PK',
       pageViewed: page,
-      device: 'Mobile iOS',
+      device: typeof navigator !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile Web' : 'Desktop Web',
       action
     };
-    setVisitorLogs((prev) => [newLog, ...prev.slice(0, 7)]);
+    setVisitorLogs((prev) => [newLog, ...prev.slice(0, 9)]);
+    api.logVisitor(newLog);
   };
 
   const formatPrice = (price: number): string => {
-    return `Rs. ${price.toLocaleString()}`;
+    return `Rs. ${(price || 0).toLocaleString()}`;
   };
 
   const analytics: AnalyticsSummary = {
-    totalRevenue: orders.reduce((sum, o) => sum + o.total, 0),
-    totalVisitors: 320,
-    totalPageviews: 1420,
-    uniqueSessions: 290,
-    conversionRate: 4.8,
-    pendingOrdersCount: orders.filter((o) => o.status === 'PENDING_CONFIRMATION').length,
-    activeShoppers: 14,
-    lowStockItemsCount: products.filter((p) => (p.stockQuantity || 0) <= (p.lowStockThreshold || 5)).length,
-    totalInventoryUnits: products.reduce((sum, p) => sum + (p.stockQuantity || 0), 0)
+    totalRevenue: (orders || []).reduce((sum, o) => sum + (o?.total || 0), 0),
+    totalVisitors: Math.max((visitorLogs || []).length, 1),
+    totalPageviews: Math.max((visitorLogs || []).length * 3, 1),
+    uniqueSessions: Math.max((visitorLogs || []).length, 1),
+    conversionRate: (orders || []).length > 0 ? parseFloat((((orders || []).length / Math.max((visitorLogs || []).length, 1)) * 100).toFixed(1)) : 0,
+    pendingOrdersCount: (orders || []).filter((o) => o?.status === 'PENDING_CONFIRMATION').length,
+    activeShoppers: Math.max((visitorLogs || []).length, 1),
+    lowStockItemsCount: (products || []).filter((p) => p && (p.stockQuantity || 0) <= (p.lowStockThreshold || 5)).length,
+    totalInventoryUnits: (products || []).reduce((sum, p) => sum + (p?.stockQuantity || 0), 0)
   };
 
   return (
@@ -200,14 +222,16 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
         orders,
         visitorLogs,
         analytics,
+        isLoading,
         addProduct,
         updateProduct,
         deleteProduct,
-        resetProductsToDefault,
+        seedInitialCatalog,
         createOrder,
         updateOrderStatus,
         recordVisitorPageview,
-        formatPrice
+        formatPrice,
+        refreshAll
       }}
     >
       {children}

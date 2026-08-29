@@ -93,9 +93,10 @@ export const CatalogPage: React.FC = () => {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(
         (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.shortDescription.toLowerCase().includes(q) ||
-          p.tagline.toLowerCase().includes(q)
+          (p.title || '').toLowerCase().includes(q) ||
+          (p.shortDescription || '').toLowerCase().includes(q) ||
+          (p.tagline || '').toLowerCase().includes(q) ||
+          (p.category || '').toLowerCase().includes(q)
       );
     }
 
@@ -170,26 +171,26 @@ export const CatalogPage: React.FC = () => {
         </div>
       </div>
 
-      {/* PINTEREST-STYLE PRODUCT GALLERY / LISTING */}
+      {/* PROFESSIONAL E-COMMERCE PRODUCT CATALOG */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-serif text-lg sm:text-xl font-semibold text-ink">
+          <h2 className="font-serif text-lg sm:text-xl font-bold text-ink">
             {selectedCategory !== 'all'
               ? categories.find((c) => c.id === selectedCategory)?.label
               : selectedOccasion !== 'all'
               ? `${OCCASIONS_LIST.find((o) => o.id === selectedOccasion)?.label} Collection`
-              : 'Curated Gallery'}
+              : 'Studio Handcrafted Catalog'}
           </h2>
           <span className="text-xs text-ink-muted">{filteredProducts.length} creations</span>
         </div>
 
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 items-start">
-            {filteredProducts.map((product, idx) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {filteredProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                aspectRatioClass={getMasonryAspect(idx)}
+                aspectRatioClass="aspect-[4/5]"
               />
             ))}
           </div>
@@ -236,7 +237,7 @@ export const CatalogPage: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             {otherSuggestedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} aspectRatioClass="aspect-4/5" />
+              <ProductCard key={product.id} product={product} aspectRatioClass="aspect-[4/5]" />
             ))}
           </div>
         </section>

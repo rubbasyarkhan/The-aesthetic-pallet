@@ -96,11 +96,11 @@ export const Header: React.FC = () => {
                 title="Your Account"
               >
                 <img
-                  src={user.avatar || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(user.name)}`}
-                  alt={user.name}
+                  src={user.avatar || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(user.name || 'Studio User')}`}
+                  alt={user.name || 'User'}
                   className="w-6 h-6 rounded-full object-cover"
                 />
-                <span className="hidden sm:inline max-w-[80px] truncate">{user.name.split(' ')[0]}</span>
+                <span className="hidden sm:inline max-w-[80px] truncate">{(user.name || 'Account').split(' ')[0]}</span>
               </Link>
             ) : (
               <button
